@@ -11,6 +11,7 @@
 
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 
 #include <stdint.h>
 
@@ -38,7 +39,7 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	sstream.write("\0\0\0\0",4);
 
 	uint32_t nameSize=Name.length()+7;
-	temp_short=htons((nameSize+2)/2*2);
+	temp_short=htons((nameSize+1)/2*2);
 	sstream.write(reinterpret_cast<char*>(&temp_short),2);
 	sstream.put('T');
 	sstream.write((Name+".texb").c_str(),nameSize-1);
@@ -67,7 +68,7 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 		sstream.write("TIMG\0\0",6);
 		uint32_t curStreamSize=sstream.tellp();
 		nameSize=cur->Name.length()+11;
-		temp_short=htons((nameSize+2)/2*2);
+		temp_short=htons((nameSize+1)/2*2);
 		sstream.write(reinterpret_cast<char*>(&temp_short),2);
 		sstream.put('I');
 		sstream.write((cur->Name+".png.imag").c_str(),nameSize-1);

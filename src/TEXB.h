@@ -6,7 +6,7 @@
 #ifndef TEXB_H_
 #define TEXB_H_
 
-// In case you want to use malloc and free, just copy & uncomment 2 lines below inside your code before including TEXB.h
+// In case you want to use malloc and free, just add it to your compiler preprocessor
 // #define LIBTEXB_ALLOC(type,size) malloc(sizeof(type)*(size))
 // #define LIBTEXB_FREE(ptr) free(ptr)
 
@@ -121,10 +121,10 @@ public:
 	int32_t ReplaceImage(TextureImage* image,uint32_t index);
 	// Define new texture image location
 	// Returns 0 and the texture image index on success
-	int32_t DefineTexture(const Point* texture_vertexes,const UVPoint* texture_uvs,std::string name,uint32_t* index);
+	int32_t DefineImage(const Point* texture_vertexes,const UVPoint* texture_uvs,std::string name,uint32_t* index);
 	// Defines new texture image location with their UVs automatically generated.
 	// Returns 0 and the texture image index on success
-	int32_t DefineTexture(const Point* texture_width_height,std::string name,uint32_t* index);
+	int32_t DefineImage(const Point* texture_where_width_height,std::string name,uint32_t* index);
 	// Saves current TextureBank to file
 	// Returns 0 on success
 	int32_t SaveToFile(std::string filename,uint32_t compression_level=9);
@@ -133,6 +133,9 @@ public:
 	// Returns 0 on success
 	int32_t SaveToMemory(uint8_t*& memory,size_t* memory_size,uint32_t compression_level=9);
 	int32_t SaveToMemory(uint8_t** memory,size_t* memory_size,uint32_t compression_level=9);
+	// Reflect all changes made in the TextureImage in TextureBank by writing to TEXB raw buffer
+	// Warning: can be slow if called repeatedly
+	void ReflectChanges();
 	
 	friend TextureImage;
 };

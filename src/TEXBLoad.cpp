@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cmath>
+#include <cstdlib>
 
 #include <stdint.h>
 
@@ -52,28 +53,6 @@ uint8_t GetBytePerPixel(uint16_t TexbFlags)
 		}
 		default:
 			return 0;
-	}
-}
-
-TextureBank::TextureBank(uint32_t _Width,uint32_t _Height):Width(RawImageWidth),Height(RawImageHeight)
-{
-	uint32_t rawimage_size=_Width*_Height*4;
-	RawImageWidth=_Width;
-	RawImageHeight=_Height;
-	RawImage=LIBTEXB_ALLOC(uint8_t,rawimage_size);	// 4-byte/pixel
-
-	memset(RawImage,0,rawimage_size);
-}
-
-TextureBank::~TextureBank()
-{
-	for(uint32_t i=0;i<this->ImageList_Id.size();i++)
-	{
-		TextureImage* a=this->ImageList_Id[i];
-		uint32_t* b=this->VertexIndexUVs[i];
-		if(a->from_texb==this)
-			delete a;
-		LIBTEXB_FREE(b);
 	}
 }
 
