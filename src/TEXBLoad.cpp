@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <cerrno>
 #include <cstring>
 #include <cstdio>
 #include <cmath>
@@ -261,10 +262,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		TextureImage* timg=texb->ImageList_Id[i];
 		texb->ImageList_Names[timg->Name]=i;
 		
-		uint32_t* rawBmp=LIBTEXB_ALLOC(uint32_t,timg->Width*timg->Height);
-		uint32_t* texbBmp=reinterpret_cast<uint32_t*>(texb->RawImage);
 		uint32_t* Vrtx=texb->VertexIndexUVs[i];
-
 		Point v[4]={
 			{Vrtx[0]/65536,Vrtx[1]/65536},
 			{Vrtx[4]/65536,Vrtx[5]/65536},
@@ -277,13 +275,31 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 			{Vrtx[10]/65536.0,Vrtx[11]/65536.0},
 			{Vrtx[14]/65536.0,Vrtx[15]/65536.0}
 		};
+		uint32_t* rawBmp=NULL;
+		uint32_t* texbBmp=reinterpret_cast<uint32_t*>(texb->RawImage);
 
-		for(uint32_t y=0;y<timg->Height;y++)
+		// Check UV
+		for(uint32_t j=0;j<4;j++)
 		{
-			for(uint32_t x=0;x<timg->Width;x++)
+			if(t[j].U>1.0) t[j].U=1;
+			if(t[j].V>1.0) t[j].V=1;
+		}
+
+		// Check width & height mismatch.
+		if(v[2].X-v[0].X>timg->Width)
+			timg->Width=v[2].X-v[0].X;
+		if(v[2].Y-v[0].Y>timg->Height)
+			timg->Height=v[2].Y-v[0].Y;
+
+		rawBmp=LIBTEXB_ALLOC(uint32_t,timg->Width*timg->Height);
+
+		memset(rawBmp,0,timg->Width*timg->Height*4);
+		for(uint32_t y=v[0].Y;y<v[2].Y;y++)
+		{
+			for(uint32_t x=v[0].X;x<v[2].X;x++)
 			{
 				UVPoint uv=xy2uv(x,y,v[0],v[1],v[2],v[3],t[0],t[1],t[2],t[3]);
-				rawBmp[x+y*timg->Width]=texbBmp[uint32_t(uv.U*tWidth+0.5)+uint32_t(uv.V*tHeight+0.5)*tWidth];
+				rawBmp[x+y*v[2].X]=texbBmp[uint32_t(uv.U*tWidth+0.5)+uint32_t(uv.V*tHeight+0.5)*tWidth];
 			}
 		}
 

@@ -55,7 +55,6 @@ struct TextureImage;
 struct TextureBank
 {
 protected:
-	uint8_t* RawImage;
 	uint32_t RawImageWidth;
 	uint32_t RawImageHeight;
 	std::vector<TextureImage*> ImageList_Id;
@@ -71,6 +70,8 @@ public:
 	const uint32_t& Width;
 	// Texture bank height
 	const uint32_t& Height;
+	// Texture bank raw image
+	uint8_t* RawImage;
 	// Creates TextureBank from specificed width and height.
 	// It's recommended that the width and the height is power of 2, but width and height doesn't need to be equal
 	// Example: 1024x512 is acceptable width and height

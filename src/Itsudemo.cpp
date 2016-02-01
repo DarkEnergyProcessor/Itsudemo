@@ -9,6 +9,8 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <vector>
+#include <map>
 
 #include <cstring>
 #include <cstdlib>
@@ -34,22 +36,187 @@ struct AppendStringVisitor:public TCLAP::Visitor
 
 struct InteractiveVariables
 {
-	uint32_t Type;	// 0=int; 1=TextureBank; 2=TextureImage
+	uint32_t Type;	// 0=int; 1=TextureBank; 2=TextureImage; 3 = std::string
 	int32_t Value;
 	TextureBank* Bank;
 	TextureImage* Image;
+	std::string String;
 };
+
+inline std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uint32_t& w,uint32_t& h)
+{
+	if(texb->Name==name)
+	{
+		w=texb->Width;
+		h=texb->Height;
+		return texb->FetchRaw();
+	}
+	TextureImage* timg=texb->FetchImage(name);
+	w=timg->Width;
+	h=timg->Height;
+	return std::vector<uint8_t>(timg->RawImage,timg->RawImage+w*h*4);
+}
+
+const char* getBasename(const char* path)
+{
+	const char* a=strrchr(path,'/');
+	const char* b=strrchr(path,'\\');
+	return a==b?path:std::max(a,b);
+}
+
+std::vector<std::string> split_string(const std::string split)
+{
+	std::stringstream ss;
+	std::vector<std::string> splitted;
+	
+
+	for(uint32_t i=0;i<split.length();i++)
+	{
+		char c=split[i];
+		if(c==' ')
+		{
+			splitted.push_back(std::string(ss.str()));
+			ss.str("");
+			ss.clear();
+		}
+		else if(c=='\"')
+		{
+			i++;
+			while(split[i]!='\"')
+			{
+				ss << split[i];
+				i++;
+			}
+		}
+		else
+			ss << split[i];
+	}
+
+	return splitted;
+}
+
+bool isValidVariable(const std::string str)
+{
+	if(str.length()>0 && !(str[0]>='0' && str[0] <='9'))
+	{
+		for(uint32_t i=0;i<str.length();i++)
+		{
+			char c=str[i];
+			if((c>='A' && c<='Z') || (c>='a' && c<='z') || c=='_')
+				continue;
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+template<typename T> bool getVectorIndex(std::vector<T>& v,uint32_t index,T& to)
+{
+	try
+	{
+		T& a=v[index];
+		to=a;
+		return true;
+	}
+	catch(...)
+	{
+		return false;
+	}
+}
+
+void dumpTEXB(TextureBank* texb,const std::string path)
+{
+	uint32_t temp_int=0;
+	std::vector<TextureImage*> timg_list=texb->FetchAll();
+	std::string temp_string;
+	std::string fixedPath="";
+	const char* charPath=path.c_str();
+	const char* basename=getBasename(charPath);
+	if(basename>charPath)
+		fixedPath=std::string(path,0,basename-charPath+1);
+
+	TextureImage* temp_timg=NULL;
+
+	std::cout << "File: " << path << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
+	std::cout << "Image(s): " << timg_list.size() << std::endl;
+	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
+	{
+		temp_timg=*i;
+		std::cout << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
+	}
+	temp_string=std::string(strrchr(texb->Name.c_str(),'/')+1)+".png";
+
+	std::cout << std::endl;
+	std::cout << "Writing: " << temp_string << std::endl;
+	temp_int=lodepng::encode(fixedPath+temp_string,texb->FetchRaw(),texb->Width,texb->Height);
+	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
+	{
+		temp_timg=*i;
+		temp_string=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png";
+		std::cout << "Writing: " << temp_string << std::endl;
+		temp_int=lodepng::encode(
+			fixedPath+temp_string,
+			std::vector<uint8_t>(
+				reinterpret_cast<char*>(temp_timg->RawImage),
+				reinterpret_cast<char*>(temp_timg->RawImage)+temp_timg->Width*temp_timg->Height*4
+			),
+			temp_timg->Width,
+			temp_timg->Height
+		);
+	}
+}
 
 int main_interactive()
 {
 	/*
 	std::vector<std::string> DelimitedCommand;
+	std::map<std::string,InteractiveVariables*> Variables;
+	
 	for(std::string TempString;std::getline(std::cin,TempString);)
 	{
-		std::cout << "> ";
+		DelimitedCommand=split_string(TempString);
+		
+		// Commands
+		if(DelimitedCommand.size()==0) break;
 
-	}
-	*/
+		if(DelimitedCommand[0]=="dump")
+		{
+			std::string var;
+			if(getVectorIndex(DelimitedCommand,1,var))
+			{
+				if(var[0]=='@')
+				{
+					// Path to TEXB
+					TextureBank* texb=NULL;
+					var=var.substr(1);
+
+					try
+					{
+						texb=TextureBank::FromFile(var);
+					}
+					catch(int e)
+					{
+						std::cerr << "Error: Cannot open " << var << ": " << strerror(e) << std::endl;
+						continue;
+					}
+
+					const char* filePath=var.c_str();
+					const char* basename=getBasename(filePath);
+					std::string fileDir;
+					if(basename>=filePath)
+						fileDir=std::string(filePath,uint32_t(basename-filePath)+1);
+
+
+				}
+			}
+			else
+			{
+				std::cerr << "Error: Arg #2 missing. Expected TEXB or path" << std::endl;
+				continue;
+			}
+		}
+	}*/
 	return 1;
 }
 
@@ -58,7 +225,7 @@ void parse_timg_path(const std::string& from,std::string* to)
 	const char* a=from.c_str();
 	const char* b=strchr(a,':');
 
-	to[0]=std::string(a,b-a);
+	to[0]=std::string(a,uint32_t(b-a));
 	to[1]=std::string(b+1);
 }
 
@@ -79,13 +246,13 @@ int main(int argc,char* argv[])
 	AppendStringVisitor AppendR("r",&CmdLineOrder);
 	CmdLine CommandLine("Command-line",' ',VersionString);
 	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout",CommandLine,false);
-	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"unsigned int");
-	SwitchArg SwitchD("d","dump-texb","Dump all images, including the texture to PNG in current directory",CommandLine,false);
-	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.\n    String format: <timg name>:<path to png>",false,"string",CommandLine,&AppendE);
-	MultiArg<std::string> SwitchN("n","rename","Rename internal name of TIMG in TEXB.\n    String format: <timg name>:<timg new name>",false,"string",CommandLine,&AppendN);
-	ValueArg<std::string> SwitchO("o","output","Specify output of the TEXB file. Defaults to input file which means overwrite it",false,"","string",CommandLine);
-	MultiArg<std::string> SwitchR("r","replace","Replace TIMG with PNG in TEXB.\n    String format: <timg name>:<path to png>",false,"string",CommandLine,&AppendR);
-	UnlabeledValueArg<std::string> TEXBInput("input","Input TEXB File location",true,"","string",CommandLine);
+	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
+	SwitchArg SwitchD("d","dump-texb","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
+	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.",false,"timg name>:<png out path>",CommandLine,&AppendE);
+	MultiArg<std::string> SwitchN("n","rename","Rename internal name of TIMG in TEXB.",false,"timg name>:<timg new name",CommandLine,&AppendN);
+	ValueArg<std::string> SwitchO("o","output","Specify output of the TEXB file. Defaults to input file which means overwrite it",false,"","output texb",CommandLine);
+	MultiArg<std::string> SwitchR("r","replace","Replace TIMG with PNG in TEXB.",false,"timg name>:<png in path",CommandLine,&AppendR);
+	UnlabeledValueArg<std::string> TEXBInput("input","Input TEXB File location",true,"","input texb",CommandLine);
 	std::vector<Arg*> SwitchXOR;
 
 	try
@@ -118,7 +285,7 @@ int main(int argc,char* argv[])
 		std::vector<TextureImage*> timg_list=texb->FetchAll();
 		TextureImage* temp_timg=NULL;
 
-		std::cout << "File: " << inputPath.c_str() << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
+		std::cout << "File: " << inputPath << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
 		std::cout << "Image(s): " << timg_list.size() << std::endl;
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{
@@ -130,40 +297,7 @@ int main(int argc,char* argv[])
 
 	if(SwitchD.getValue())
 	{
-		std::vector<TextureImage*> timg_list=texb->FetchAll();
-		std::string temp_string;
-		TextureImage* temp_timg=NULL;
-
-		if(SwitchA.isSet()==false)
-		{
-			std::cout << "File: " << inputPath.c_str() << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
-			std::cout << "Image(s): " << timg_list.size() << std::endl;
-			for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
-			{
-				temp_timg=*i;
-				std::cout << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
-			}
-		}
-		temp_string=std::string(strrchr(texb->Name.c_str(),'/')+1)+".png";
-
-		std::cout << std::endl;
-		std::cout << "Writing: " << temp_string << std::endl;
-		temp_int=lodepng::encode(temp_string,texb->FetchRaw(),texb->Width,texb->Height);
-		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
-		{
-			temp_timg=*i;
-			temp_string=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png";
-			std::cout << "Writing: " << temp_string.c_str() << std::endl;
-			temp_int=lodepng::encode(
-				temp_string.c_str(),
-				std::vector<uint8_t>(
-					reinterpret_cast<char*>(temp_timg->RawImage),
-					reinterpret_cast<char*>(temp_timg->RawImage)+temp_timg->Width*temp_timg->Height*4
-				),
-				temp_timg->Width,
-				temp_timg->Height
-			);
-		}
+		dumpTEXB(texb,inputPath);
 		std::cout << std::endl;
 		return 0;
 	}
@@ -195,34 +329,39 @@ int main(int argc,char* argv[])
 
 			try
 			{
-				timg=texb->FetchImage(timg_n_path[0]);
+				rawImage=getRawImageFromTEXB(texb,timg_n_path[0],temp_int2,temp_int3);
 			}
 			catch(int)
 			{
-				std::cerr << "Extract: Cannot find " << timg_n_path[0] << " in " << texb->Name << std::endl;
+				std::cerr << "Extract: cannot find " << timg_n_path[0] << "in " << texb->Name << std::endl;
 				continue;
 			}
-
-			temp_int=lodepng::encode(timg_n_path[1],timg->RawImage,timg->Width,timg->Height);
+			temp_int=lodepng::encode(timg_n_path[1],rawImage,temp_int2,temp_int3);
 			if(temp_int!=0)
 				std::cerr << "Extract: Cannot write " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+			rawImage=std::vector<uint8_t>();
 		}
 		else if(type=='n')
 		{
 			indexN++;
 			parse_timg_path(RenameList[indexN],timg_n_path);
 
-			try
+			if(texb->Name==timg_n_path[0])
+				texb->Name=timg_n_path[1];
+			else
 			{
-				timg=texb->FetchImage(timg_n_path[0]);
-			}
-			catch(int)
-			{
-				std::cerr << "Rename: Cannot find " << timg_n_path[0] << " in " << texb->Name << std::endl;
-				continue;
-			}
+				try
+				{
+					timg=texb->FetchImage(timg_n_path[0]);
+				}
+				catch(int)
+				{
+					std::cerr << "Rename: Cannot find " << timg_n_path[0] << " in " << texb->Name << std::endl;
+					continue;
+				}
 
-			timg->Name=std::string(timg_n_path[1]);
+				timg->Name=std::string(timg_n_path[1]);
+			}
 			isTexbModified|=1;
 		}
 		else if(type=='r')
@@ -230,33 +369,56 @@ int main(int argc,char* argv[])
 			indexR++;
 			parse_timg_path(ReplaceList[indexR],timg_n_path);
 
-			try
+			if(texb->Name==timg_n_path[0])
 			{
-				timg=texb->FetchImage(timg_n_path[0]);
+				uint8_t* rw=texb->RawImage;
+				temp_int=lodepng::decode(rawImage,temp_int2,temp_int3,timg_n_path[1]);
+				if(temp_int!=0)
+				{
+					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+					rawImage=std::vector<uint8_t>();
+					continue;
+				}
+				if(texb->Width!=temp_int2 || texb->Height!=temp_int3)
+				{
+					std::cerr << "Replace: Cannot write " << timg_n_path[0] << ": Image size mismatch." << std::endl <<
+						"         Expected " << texb->Width << "x" << texb->Height << " pixels, got " <<
+						temp_int2 << "x" << temp_int3 << " pixels." << std::endl;
+					rawImage=std::vector<uint8_t>();
+					continue;
+				}
+				memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
 			}
-			catch(int)
+			else
 			{
-				std::cerr << "Replace: Cannot find " << timg_n_path[0] << " in " << texb->Name << std::endl;
-				continue;
-			}
+				try
+				{
+					timg=texb->FetchImage(timg_n_path[0]);
+				}
+				catch(int)
+				{
+					std::cerr << "Replace: Cannot find " << timg_n_path[0] << " in " << texb->Name << std::endl;
+					continue;
+				}
 
-			temp_int=lodepng::decode(rawImage,temp_int2,temp_int3,timg_n_path[1]);
-			if(temp_int!=0)
-			{
-				std::cerr << "Replace: Cannot write " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
-				rawImage=std::vector<uint8_t>();
-				continue;
-			}
-			if(timg->Width!=temp_int2 || timg->Height!=temp_int3)
-			{
-				std::cerr << "Replace: Cannot write " << timg_n_path[1] << ": Image size mismatch." << std::endl <<
-					"         Expected " << timg->Width << "x" << timg->Height << "pixels, got " <<
-					temp_int2 << "x" << temp_int3 << "pixels." << std::endl;
-				rawImage=std::vector<uint8_t>();
-				continue;
-			}
+				temp_int=lodepng::decode(rawImage,temp_int2,temp_int3,timg_n_path[1]);
+				if(temp_int!=0)
+				{
+					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+					rawImage=std::vector<uint8_t>();
+					continue;
+				}
+				if(timg->Width!=temp_int2 || timg->Height!=temp_int3)
+				{
+					std::cerr << "Replace: Cannot write " << timg_n_path[0] << ": Image size mismatch." << std::endl <<
+						"         Expected " << timg->Width << "x" << timg->Height << " pixels, got " <<
+						temp_int2 << "x" << temp_int3 << " pixels." << std::endl;
+					rawImage=std::vector<uint8_t>();
+					continue;
+				}
 
-			memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
+				memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
+			}
 			rawImage=std::vector<uint8_t>();
 			isTexbModified|=2;
 		}

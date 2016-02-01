@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 
+#include <cerrno>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -141,7 +142,7 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	return 0;
 }
 
-int32_t TextureBank::SaveToMemory(uint8_t** Memory,size_t* MemorySize,uint32_t CompressLevel)
+inline int32_t TextureBank::SaveToMemory(uint8_t** Memory,size_t* MemorySize,uint32_t CompressLevel)
 {
 	return SaveToMemory(*Memory,MemorySize,CompressLevel);
 }
@@ -150,13 +151,13 @@ int32_t TextureBank::SaveToFile(std::string Filename,uint32_t CompressLevel)
 {
 	FILE* fptr;
 	uint8_t* temp_buffer;
-	uint32_t bufsize;
+	size_t bufsize;
 	uint32_t ret;
 
 	fptr=fopen(Filename.c_str(),"wb");
 	if(fptr==NULL) return errno;
 
-	ret=SaveToMemory(temp_buffer,&bufsize,CompressLevel);
+	ret=SaveToMemory(&temp_buffer,&bufsize,CompressLevel);
 	if(ret==0)
 	{
 		fwrite(temp_buffer,1,bufsize,fptr);
