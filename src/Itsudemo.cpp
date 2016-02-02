@@ -34,16 +34,9 @@ struct AppendStringVisitor:public TCLAP::Visitor
 	}
 };
 
-struct InteractiveVariables
-{
-	uint32_t Type;	// 0=int; 1=TextureBank; 2=TextureImage; 3 = std::string
-	int32_t Value;
-	TextureBank* Bank;
-	TextureImage* Image;
-	std::string String;
-};
+int main_interactive();
 
-inline std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uint32_t& w,uint32_t& h)
+std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uint32_t& w,uint32_t& h)
 {
 	if(texb->Name==name)
 	{
@@ -62,67 +55,6 @@ const char* getBasename(const char* path)
 	const char* a=strrchr(path,'/');
 	const char* b=strrchr(path,'\\');
 	return a==b?path:std::max(a,b);
-}
-
-std::vector<std::string> split_string(const std::string split)
-{
-	std::stringstream ss;
-	std::vector<std::string> splitted;
-	
-
-	for(uint32_t i=0;i<split.length();i++)
-	{
-		char c=split[i];
-		if(c==' ')
-		{
-			splitted.push_back(std::string(ss.str()));
-			ss.str("");
-			ss.clear();
-		}
-		else if(c=='\"')
-		{
-			i++;
-			while(split[i]!='\"')
-			{
-				ss << split[i];
-				i++;
-			}
-		}
-		else
-			ss << split[i];
-	}
-
-	return splitted;
-}
-
-bool isValidVariable(const std::string str)
-{
-	if(str.length()>0 && !(str[0]>='0' && str[0] <='9'))
-	{
-		for(uint32_t i=0;i<str.length();i++)
-		{
-			char c=str[i];
-			if((c>='A' && c<='Z') || (c>='a' && c<='z') || c=='_')
-				continue;
-			return false;
-		}
-		return true;
-	}
-	return false;
-}
-
-template<typename T> bool getVectorIndex(std::vector<T>& v,uint32_t index,T& to)
-{
-	try
-	{
-		T& a=v[index];
-		to=a;
-		return true;
-	}
-	catch(...)
-	{
-		return false;
-	}
 }
 
 void dumpTEXB(TextureBank* texb,const std::string path)
@@ -167,59 +99,6 @@ void dumpTEXB(TextureBank* texb,const std::string path)
 	}
 }
 
-int main_interactive()
-{
-	/*
-	std::vector<std::string> DelimitedCommand;
-	std::map<std::string,InteractiveVariables*> Variables;
-	
-	for(std::string TempString;std::getline(std::cin,TempString);)
-	{
-		DelimitedCommand=split_string(TempString);
-		
-		// Commands
-		if(DelimitedCommand.size()==0) break;
-
-		if(DelimitedCommand[0]=="dump")
-		{
-			std::string var;
-			if(getVectorIndex(DelimitedCommand,1,var))
-			{
-				if(var[0]=='@')
-				{
-					// Path to TEXB
-					TextureBank* texb=NULL;
-					var=var.substr(1);
-
-					try
-					{
-						texb=TextureBank::FromFile(var);
-					}
-					catch(int e)
-					{
-						std::cerr << "Error: Cannot open " << var << ": " << strerror(e) << std::endl;
-						continue;
-					}
-
-					const char* filePath=var.c_str();
-					const char* basename=getBasename(filePath);
-					std::string fileDir;
-					if(basename>=filePath)
-						fileDir=std::string(filePath,uint32_t(basename-filePath)+1);
-
-
-				}
-			}
-			else
-			{
-				std::cerr << "Error: Arg #2 missing. Expected TEXB or path" << std::endl;
-				continue;
-			}
-		}
-	}*/
-	return 1;
-}
-
 void parse_timg_path(const std::string& from,std::string* to)
 {
 	const char* a=from.c_str();
@@ -234,8 +113,9 @@ int main(int argc,char* argv[])
 	if(argc<2)
 	{
 		// TODO: Interactive mode
-		std::cerr << "Currently interactive mode is not supported." << std::endl;
+		//std::cerr << "Currently interactive mode is not supported." << std::endl;
 		return main_interactive();
+		//return 1;
 	}
 	std::string VersionString("0.1\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
@@ -248,7 +128,7 @@ int main(int argc,char* argv[])
 	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout",CommandLine,false);
 	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
 	SwitchArg SwitchD("d","dump-texb","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
-	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.",false,"timg name>:<png out path>",CommandLine,&AppendE);
+	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.",false,"timg name>:<png out path",CommandLine,&AppendE);
 	MultiArg<std::string> SwitchN("n","rename","Rename internal name of TIMG in TEXB.",false,"timg name>:<timg new name",CommandLine,&AppendN);
 	ValueArg<std::string> SwitchO("o","output","Specify output of the TEXB file. Defaults to input file which means overwrite it",false,"","output texb",CommandLine);
 	MultiArg<std::string> SwitchR("r","replace","Replace TIMG with PNG in TEXB.",false,"timg name>:<png in path",CommandLine,&AppendR);
