@@ -134,7 +134,7 @@ public:
 	// Returns 0 on success
 	int32_t SaveToMemory(uint8_t*& memory,size_t* memory_size,uint32_t compression_level=9);
 	int32_t SaveToMemory(uint8_t** memory,size_t* memory_size,uint32_t compression_level=9);
-	// Reflect all changes made in the TextureImage in TextureBank by writing to TEXB raw buffer
+	// Reflect all changes made in the TextureImage by writing to TEXB raw buffer
 	// Warning: can be slow if called repeatedly
 	void ReflectChanges();
 	

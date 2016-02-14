@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <tclap/CmdLine.h>
 #include <lodepng.h>
+#include <zlib.h>
+
 
 struct AppendStringVisitor:public TCLAP::Visitor
 {
@@ -34,7 +36,7 @@ struct AppendStringVisitor:public TCLAP::Visitor
 	}
 };
 
-int main_interactive();
+//int main_interactive();
 
 std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uint32_t& w,uint32_t& h)
 {
@@ -70,23 +72,23 @@ void dumpTEXB(TextureBank* texb,const std::string path)
 
 	TextureImage* temp_timg=NULL;
 
-	std::cout << "File: " << path << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
-	std::cout << "Image(s): " << timg_list.size() << std::endl;
+	std::cerr << "File: " << path << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
+	std::cerr << "Image(s): " << timg_list.size() << std::endl;
 	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 	{
 		temp_timg=*i;
-		std::cout << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
+		std::cerr << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
 	}
 	temp_string=std::string(strrchr(texb->Name.c_str(),'/')+1)+".png";
 
-	std::cout << std::endl;
-	std::cout << "Writing: " << temp_string << std::endl;
+	std::cerr << std::endl;
+	std::cerr << "Writing: " << temp_string << std::endl;
 	temp_int=lodepng::encode(fixedPath+temp_string,texb->FetchRaw(),texb->Width,texb->Height);
 	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 	{
 		temp_timg=*i;
 		temp_string=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png";
-		std::cout << "Writing: " << temp_string << std::endl;
+		std::cerr << "Writing: " << temp_string << std::endl;
 		temp_int=lodepng::encode(
 			fixedPath+temp_string,
 			std::vector<uint8_t>(
@@ -99,13 +101,25 @@ void dumpTEXB(TextureBank* texb,const std::string path)
 	}
 }
 
-void parse_timg_path(const std::string& from,std::string* to)
+bool parse_timg_path(const std::string& from,std::string* to,bool path_necessary=false,const std::string& default_suffix=".png")
 {
 	const char* a=from.c_str();
 	const char* b=strchr(a,':');
-
-	to[0]=std::string(a,uint32_t(b-a));
-	to[1]=std::string(b+1);
+	
+	if(b)
+	{
+		to[0]=std::string(a,uint32_t(b-a));
+		to[1]=std::string(b+1);
+	}
+	else
+	{
+		if(path_necessary) return false;
+		const char* c=strrchr(a,'/');
+		c=c==NULL?a:c+1;
+		to[0]=a;
+		to[1]=std::string(c)+default_suffix;
+	}
+	return true;
 }
 
 int main(int argc,char* argv[])
@@ -114,17 +128,19 @@ int main(int argc,char* argv[])
 	{
 		// TODO: Interactive mode
 		//std::cerr << "Currently interactive mode is not supported." << std::endl;
-		return main_interactive();
-		//return 1;
+		//return main_interactive();
+		std::cerr << "   Type --help for command-line usage.\n" << std::endl;
+		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
+		return 0;
 	}
-	std::string VersionString("0.1\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString("1.0\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 	using namespace TCLAP;
 	std::string CmdLineOrder;
 	AppendStringVisitor AppendE("e",&CmdLineOrder);
 	AppendStringVisitor AppendN("n",&CmdLineOrder);
 	AppendStringVisitor AppendR("r",&CmdLineOrder);
-	CmdLine CommandLine("Command-line",' ',VersionString);
+	CmdLine CommandLine("Itsudemo. TEXB Manipulation tool\nCopyright (c) 2037 Dark Energy Processor Corporation",' ',VersionString);
 	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout",CommandLine,false);
 	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
 	SwitchArg SwitchD("d","dump-texb","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
@@ -158,6 +174,7 @@ int main(int argc,char* argv[])
 	catch(int err)
 	{
 		std::cerr << "Cannot open " << inputPath.c_str() << ": " << strerror(err) << std::endl;
+		return err;
 	}
 
 	if(SwitchA.getValue())
@@ -165,20 +182,20 @@ int main(int argc,char* argv[])
 		std::vector<TextureImage*> timg_list=texb->FetchAll();
 		TextureImage* temp_timg=NULL;
 
-		std::cout << "File: " << inputPath << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
-		std::cout << "Image(s): " << timg_list.size() << std::endl;
+		std::cerr << "File: " << inputPath << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
+		std::cerr << "Image(s): " << timg_list.size() << std::endl;
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{
 			temp_timg=*i;
-			std::cout << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
+			std::cerr << "    " << temp_timg->Name << ": " << temp_timg->Width << "x" << temp_timg->Height << " pixels" << std::endl;
 		}
-		std::cout << std::endl;
+		std::cerr << std::endl;
 	}
 
 	if(SwitchD.getValue())
 	{
 		dumpTEXB(texb,inputPath);
-		std::cout << std::endl;
+		std::cerr << std::endl;
 		return 0;
 	}
 	std::string TEXBOutput;
@@ -213,18 +230,23 @@ int main(int argc,char* argv[])
 			}
 			catch(int)
 			{
-				std::cerr << "Extract: cannot find " << timg_n_path[0] << "in " << texb->Name << std::endl;
+				std::cerr << "Extract: Cannot find " << timg_n_path[0] << "in " << texb->Name << std::endl;
 				continue;
 			}
+			std::cerr << "Extract: Writing " << timg_n_path[0] << " to " << timg_n_path[1] << std::endl;
 			temp_int=lodepng::encode(timg_n_path[1],rawImage,temp_int2,temp_int3);
 			if(temp_int!=0)
-				std::cerr << "Extract: Cannot write " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+				std::cerr << "Extract: Cannot write " << timg_n_path[1] << ": " << lodepng_error_text(temp_int) << std::endl;
 			rawImage=std::vector<uint8_t>();
 		}
 		else if(type=='n')
 		{
 			indexN++;
-			parse_timg_path(RenameList[indexN],timg_n_path);
+			if(parse_timg_path(RenameList[indexN],timg_n_path,true)==false)
+			{
+				std::cerr << "Rename: Cannot rename '" << RenameList[indexN] << "': missing 'timg new name'" << std::endl;
+				continue;
+			}
 
 			if(texb->Name==timg_n_path[0])
 				texb->Name=timg_n_path[1];
@@ -240,6 +262,7 @@ int main(int argc,char* argv[])
 					continue;
 				}
 
+				std::cerr << "Rename: Renaming " << timg_n_path[0] << " to " << timg_n_path[1] << std::endl;
 				timg->Name=std::string(timg_n_path[1]);
 			}
 			isTexbModified|=1;
@@ -255,7 +278,7 @@ int main(int argc,char* argv[])
 				temp_int=lodepng::decode(rawImage,temp_int2,temp_int3,timg_n_path[1]);
 				if(temp_int!=0)
 				{
-					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << lodepng_error_text(temp_int) << std::endl;
 					rawImage=std::vector<uint8_t>();
 					continue;
 				}
@@ -267,6 +290,7 @@ int main(int argc,char* argv[])
 					rawImage=std::vector<uint8_t>();
 					continue;
 				}
+				std::cerr << "Replace: Replacing " << timg_n_path[0] << " image from " << timg_n_path[1] << std::endl;
 				memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
 			}
 			else
@@ -284,7 +308,7 @@ int main(int argc,char* argv[])
 				temp_int=lodepng::decode(rawImage,temp_int2,temp_int3,timg_n_path[1]);
 				if(temp_int!=0)
 				{
-					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << strerror(temp_int) << std::endl;
+					std::cerr << "Replace: Cannot read " << timg_n_path[1] << ": " << lodepng_error_text(temp_int) << std::endl;
 					rawImage=std::vector<uint8_t>();
 					continue;
 				}
@@ -296,7 +320,8 @@ int main(int argc,char* argv[])
 					rawImage=std::vector<uint8_t>();
 					continue;
 				}
-
+				
+				std::cerr << "Replace: Replacing " << timg_n_path[0] << " image from " << timg_n_path[1] << std::endl;
 				memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
 			}
 			rawImage=std::vector<uint8_t>();
