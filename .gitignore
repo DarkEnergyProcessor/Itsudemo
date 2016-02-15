@@ -1,0 +1,5 @@
+bin/*
+sln/*
+!sln/Itsudemo.sln
+!sln/Itsudemo.vcxproj
+!sln/Itsudemo.vcxproj.filters

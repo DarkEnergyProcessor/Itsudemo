@@ -42,8 +42,12 @@ ndk:
 
 vscmd:
 	-mkdir -p bin/vscmd
-	cl -W3 -Zc:wchar_t -Ox -D"_CRT_SECURE_NO_WARNINGS" -D"WIN32" -D"_CONSOLE" -EHsc -MT -c -I.\\zlib-1.2.8 -I.\\tclap-1.2.1 -I.\\lodepng src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp
-	link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG -RELEASE -SUBSYSTEM:CONSOLE *.obj ws2_32.lib
-	rm *.obj
+	@where cl.exe
+	@where link.exe
+	@where rc.exe
+	@cl -W3 -Zc:wchar_t -Ox -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -MT -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp
+	@rc -v -l 0 Info.rc
+	@link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG -RELEASE -SUBSYSTEM:CONSOLE *.obj Info.res ws2_32.lib
+	@rm *.obj Info.res
 
 .PHONY: all
