@@ -251,6 +251,8 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 			LIBTEXB_FAILWITH(EBADF);
 		}
 	}
+	else
+		memory_buffer.read(reinterpret_cast<char*>(rawData),dataSize);
 	texb->RawImage=LIBTEXB_ALLOC(uint8_t,tWidth*tHeight*4);
 	convert_map(rawData,tWidth,tHeight,TexbFlags,texb->RawImage);
 	texb->ImageList_Id=imageListTemp;

@@ -357,7 +357,8 @@ int main(int argc,char* argv[])
 					continue;
 				}
 				std::cerr << "Replace: Replacing " << timg_n_path[0] << " image from " << timg_n_path[1] << std::endl;
-				memcpy(timg->RawImage,&rawImage[0],temp_int2*temp_int3*4);
+				memcpy(texb->RawImage,&rawImage[0],temp_int2*temp_int3*4);
+				isTexbModified|=4;
 			}
 			else
 			{
@@ -397,7 +398,7 @@ int main(int argc,char* argv[])
 	}
 
 	// Reflect changes.
-	if(isTexbModified>1)
+	if(isTexbModified>1 && (isTexbModified&4)==0)
 		texb->ReflectChanges();
 	if(isTexbModified)
 		texb->SaveToFile(TEXBOutput,SwitchC.getValue());

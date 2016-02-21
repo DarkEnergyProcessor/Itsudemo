@@ -1,8 +1,8 @@
 #ifdef RC_INVOKED
 
 1 VERSIONINFO
-FILEVERSION		1,0,1,0
-PRODUCTVERSION	1,0,1,0
+FILEVERSION		1,0,2,0
+PRODUCTVERSION	1,0,2,0
 FILEFLAGSMASK 0x17L
 FILEOS 0x40004L
 FILETYPE 0x1L
@@ -14,12 +14,12 @@ BEGIN
 		BEGIN
 			VALUE "CompanyName", "Dark Energy Processor Corporation"
 			VALUE "FileDescription", "TEXB Manipulation Tool"
-			VALUE "FileVersion", "1.0.1.0"
+			VALUE "FileVersion", "1.0.2.0"
 			VALUE "InternalName", "Itsudemo.exe"
 			VALUE "LegalCopyright", "Copyright © 2037 Dark Energy Processor Corporation"
 			VALUE "OriginalFilename", "Itsudemo.exe"
 			VALUE "ProductName", "Itsudemo"
-			VALUE "ProductVersion", "1.0.1.0"
+			VALUE "ProductVersion", "1.0.2.0"
 		END
 	END
 	BLOCK "VarFileInfo"
