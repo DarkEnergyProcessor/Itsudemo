@@ -8,17 +8,22 @@ NDK_BUILD ?= ndk-build
 
 ifeq ($(OS),Windows_NT)
 ADD_WINSOCK := -lws2_32
+RC_CMD := windres -O coff Info.rc Info.res
+RC_FILE := Info.res
 else
 ADD_WINSOCK := 
+RC_CMD :=
+RC_FILE :=
 endif
 
 all: gcc
 
 gcc:
+	$(RC_CMD)
 	g++ -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
 	gcc -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
-	g++ -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(ADD_WINSOCK)
-	-rm *.o
+	g++ -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(ADD_WINSOCK) $(RC_FILE)
+	-rm *.o $(RC_FILE)
 
 ndk:
 	$(NDK_BUILD) APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk NDK_PROJECT_PATH=.

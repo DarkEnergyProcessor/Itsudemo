@@ -20,6 +20,16 @@
 #include <lodepng.h>
 #include <zlib.h>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <WinSock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
 
 struct AppendStringVisitor:public TCLAP::Visitor
 {
@@ -157,7 +167,7 @@ int main(int argc,char* argv[])
 		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString("1.0.1\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString("1.0.3\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 	using namespace TCLAP;
 	std::string CmdLineOrder;
@@ -169,6 +179,7 @@ int main(int argc,char* argv[])
 	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
 	SwitchArg SwitchD("d","dump-all","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
 	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.",false,"timg name>:<png out path",CommandLine,&AppendE);
+	SwitchArg SwitchG("g","generate-link","Create .png.imag (LINK file) at current TEXB directory.",CommandLine,false);
 	SwitchArg SwitchI("i","dump-images","Dump all images, excluding the texture bank raw image.",CommandLine,false);
 	MultiArg<std::string> SwitchN("n","rename","Rename internal name of TIMG in TEXB.",false,"timg name>:<timg new name",CommandLine,&AppendN);
 	ValueArg<std::string> SwitchO("o","output","Specify output of the TEXB file. Defaults to input file which means overwrite it",false,"","output texb",CommandLine);
@@ -211,6 +222,31 @@ int main(int argc,char* argv[])
 		std::cerr << std::endl;
 	}
 
+	if(SwitchG.getValue())
+	{
+		std::vector<TextureImage*> timg_list=texb->FetchAll();
+		TextureImage* temp_timg=NULL;
+		FILE* tempf=NULL;
+		std::string link_path=getDirectory(inputPath.c_str());
+		show_information_once(texb,inputPath);
+
+		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
+		{
+			temp_timg=*i;
+			std::string filename=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png.imag";
+			uint32_t temp=htonl(texb->Name.length()+6);
+
+			std::cerr << "Writing: " << filename << std::endl;
+			tempf=fopen((link_path+filename).c_str(),"wb");
+			fwrite("LINK",4,1,tempf);
+			fwrite(&temp,4,1,tempf);
+			fwrite((texb->Name+".texb").c_str(),1,ntohl(temp),tempf);
+			fclose(tempf);
+		}
+
+		std::cerr << std::endl;
+	}
+
 	if(SwitchD.getValue())
 	{
 		dumpTEXB(texb,inputPath);
@@ -223,11 +259,7 @@ int main(int argc,char* argv[])
 
 		std::string temp_string;
 		std::vector<TextureImage*> timg_list=texb->FetchAll();
-		std::string fixedPath="";
-		const char* charPath=inputPath.c_str();
-		const char* basename=getBasename(charPath);
-		if(basename>charPath)
-			fixedPath=std::string(inputPath,0,basename-charPath+1);
+		std::string fixedPath=getDirectory(inputPath.c_str());
 
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{

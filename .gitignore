@@ -1,3 +1,5 @@
+./*.texb
+./*.png.imag
 bin/*
 sln/*
 !sln/Itsudemo.sln

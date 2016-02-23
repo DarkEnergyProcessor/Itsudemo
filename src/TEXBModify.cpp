@@ -151,11 +151,12 @@ int32_t TextureBank::DefineImage(const Point* WhereWidthHeight,std::string Name,
 		{WhereWidthHeight[1].X,WhereWidthHeight[1].Y},
 		{0,WhereWidthHeight[1].Y}
 	};
+	// Applied MiraiNoHana TEXBModify.cpp patch.
 	UVPoint t[4]={
 		{double(WhereWidthHeight[0].X)/double(Width),double(WhereWidthHeight[0].Y)/double(Height)},
-		{double(WhereWidthHeight[1].X)/double(Width),double(WhereWidthHeight[0].Y)/double(Height)},
-		{double(WhereWidthHeight[1].X)/double(Width),double(WhereWidthHeight[1].Y)/double(Height)},
-		{double(WhereWidthHeight[0].X)/double(Width),double(WhereWidthHeight[1].Y)/double(Height)}
+		{double(WhereWidthHeight[1].X+WhereWidthHeight[0].X)/double(Width),double(WhereWidthHeight[0].Y)/double(Height)},
+		{double(WhereWidthHeight[1].X+WhereWidthHeight[0].X)/double(Width),double(WhereWidthHeight[1].Y+WhereWidthHeight[0].Y)/double(Height)},
+		{double(WhereWidthHeight[0].X)/double(Width),double(WhereWidthHeight[1].Y+WhereWidthHeight[0].Y)/double(Height)}
 	};
 	return DefineImage(v,t,Name,Index);
 }
