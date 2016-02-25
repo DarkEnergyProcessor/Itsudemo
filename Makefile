@@ -7,52 +7,60 @@ CFLAGS?=
 NDK_BUILD ?= ndk-build
 
 ifeq ($(OS),Windows_NT)
-ADD_WINSOCK := -lws2_32
 RC_CMD := windres -O coff Info.rc Info.res
 RC_FILE := Info.res
 else
-ADD_WINSOCK := 
 RC_CMD :=
 RC_FILE :=
 endif
+RELEASE_GCC_CMD := -O3
+RELEASE_MSV_CMD := -Ox -MT
+DEBUG_GCC_CMD :=
+DEBUG_MSV_CMD :=
+NDK_DEBUG :=
 
 all: gcc
 
 gcc:
 	$(RC_CMD)
-	g++ -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
-	gcc -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
-	g++ -O3 -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(ADD_WINSOCK) $(RC_FILE)
+	g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
+	gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
+	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
+	$(eval EXPAND_LINK = g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(RC_FILE))
+	$(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK)))))
 	-rm *.o $(RC_FILE)
 
 ndk:
-	$(NDK_BUILD) APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk NDK_PROJECT_PATH=.
+	$(NDK_BUILD) APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk NDK_PROJECT_PATH=. $(NDK_DEBUG)
 	-mkdir -p bin/jni/{arm64-v8a,armeabi{,-v7a},mips{,64},x86{,_64}}{,/stripped}
-	-cp obj/local/arm64-v8a/Itsudemo bin/jni/arm64-v8a/
-	-cp obj/local/armeabi/Itsudemo bin/jni/armeabi/
-	-cp obj/local/armeabi-v7a/Itsudemo bin/jni/armeabi-v7a/
-	-cp obj/local/mips/Itsudemo bin/jni/mips/
-	-cp obj/local/mips64/Itsudemo bin/jni/mips64/
-	-cp obj/local/x86/Itsudemo bin/jni/x86/
-	-cp obj/local/x86_64/Itsudemo bin/jni/x86_64/
-	rm -R obj
-	-cp libs/arm64-v8a/Itsudemo bin/jni/arm64-v8a/stripped/
-	-cp libs/armeabi/Itsudemo bin/jni/armeabi/stripped/
-	-cp libs/armeabi-v7a/Itsudemo bin/jni/armeabi-v7a/stripped/
-	-cp libs/mips/Itsudemo bin/jni/mips/stripped/
-	-cp libs/mips64/Itsudemo bin/jni/mips64/stripped/
-	-cp libs/x86/Itsudemo bin/jni/x86/stripped/
-	-cp libs/x86_64/Itsudemo bin/jni/x86_64/stripped/
-	rm -R libs
+	-for arch in {arm{64-v8a,eabi{,-v7a}},mips{,64},x86{,_64}}; do \
+		cp obj/local/$$arch/Itsudemo bin/jni/$$arch/; \
+		cp libs/$$arch/Itsudemo bin/jni/$$arch/stripped/; \
+	done
+	-rm -R obj
+	-rm -R libs
 
 vscmd:
 	-mkdir -p bin/vscmd
 	@where cl.exe
 	@where link.exe
 	@where rc.exe
-	@cl -W3 -Zc:wchar_t -Ox -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -MT -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp
+	@cl -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp
 	@rc -v -l 0 Info.rc
-	@link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG -RELEASE -SUBSYSTEM:CONSOLE *.obj Info.res ws2_32.lib
+	@link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT $(DEBUG_MSV_CMD) -RELEASE -SUBSYSTEM:CONSOLE *.obj Info.res
 	@rm *.obj Info.res
 
-.PHONY: all
+clean:
+	-rm *.obj *.o Info.res
+	-rm -R obj
+	-rm -R libs
+
+debug:
+	@echo Debug build.
+	$(eval RELEASE_GCC_CMD = -O0)
+	$(eval RELEASE_MSV_CMD = -Od -D"_DEBUG" -MTd)
+	$(eval DEBUG_GCC_CMD = -g -D_DEBUG)
+	$(eval DEBUG_MSV_CMD = -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG)
+	$(eval NDK_DEBUG = NDK_DEBUG=1)
+
+.PHONY: all gcc ndk vscmd debug

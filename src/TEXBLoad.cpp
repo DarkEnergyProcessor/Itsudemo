@@ -22,17 +22,6 @@
 
 #include <zlib.h>
 
-// Byte-order function
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <WinSock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-
 uint8_t GetBytePerPixel(uint16_t TexbFlags)
 {
 	uint8_t iff=TexbFlags&7;
@@ -61,6 +50,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 {
 	TextureBank* texb=NULL;
 	char* temp_buffer=NULL;
+	uint8_t prebuf[4];
 	std::stringstream memory_buffer(std::string(reinterpret_cast<char*>(_mem),_n),std::ios::binary|std::ios::in);
 	memory_buffer.seekg(0,std::ios_base::beg);
 
@@ -78,8 +68,8 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	
 	// TEXB Name without T prefix and extension
 	uint16_t temp_short=0;
-	memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-	temp_short=ntohs(temp_short);
+	memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
+	temp_short=prebuf[0]<<8|prebuf[1];
 	temp_buffer=LIBTEXB_ALLOC(char,temp_short);
 	memory_buffer.read(temp_buffer,temp_short);
 	texb->Name=std::string(temp_buffer);
@@ -87,27 +77,25 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	
 	// Width & Height
 	uint16_t tWidth,tHeight;
-	memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-	texb->RawImageWidth=tWidth=ntohs(temp_short);
-	memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-	texb->RawImageHeight=tHeight=ntohs(temp_short);
+	memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
+	texb->RawImageWidth=tWidth=(prebuf[0]<<8)|prebuf[1];
+	texb->RawImageHeight=tHeight=(prebuf[2]<<8)|prebuf[3];
 
 	// Flags
 	uint16_t TexbFlags=0;
-	memory_buffer.read(reinterpret_cast<char*>(&TexbFlags),2);
-	TexbFlags=ntohs(TexbFlags);
+	memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
+	TexbFlags=(prebuf[0]<<8)|prebuf[1];
 
 	// Vertex & Index count
 	uint16_t VertexCount=0;
 	uint16_t IndexCount=0;
 	uint16_t ImageCount=0;
 	std::vector<TextureImage*> imageListTemp;
-	memory_buffer.read(reinterpret_cast<char*>(&VertexCount),2);
-	memory_buffer.read(reinterpret_cast<char*>(&IndexCount),2);
-	memory_buffer.read(reinterpret_cast<char*>(&ImageCount),2);
-	VertexCount=ntohs(VertexCount);
-	IndexCount=ntohs(IndexCount);
-	ImageCount=ntohs(ImageCount);
+	memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
+	VertexCount=(prebuf[0]<<8)|prebuf[1];
+	IndexCount=(prebuf[2]<<8)|prebuf[3];
+	memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
+	ImageCount=(prebuf[0]<<8)|prebuf[1];
 
 	LIBTEXB_FREE(temp_buffer);
 	for(unsigned int i=0;i<ImageCount;i++)
@@ -117,8 +105,8 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 
 		// Texture Image name
 		memory_buffer.seekg(6,std::ios::cur);	// skip TIMG and it's size.
-		memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-		temp_short=ntohs(temp_short);
+		memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
+		temp_short=(prebuf[0]<<8)|prebuf[1];
 		temp_buffer=LIBTEXB_ALLOC(char,temp_short);
 		memory_buffer.read(temp_buffer,temp_short);
 		timg->Name=std::string(temp_buffer);
@@ -129,8 +117,8 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		memory_buffer.read(reinterpret_cast<char*>(&Subimgs),2);
 		if(Subimgs==0xffff)
 		{
-			memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-			temp_short=ntohs(temp_short);
+			memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
+			temp_short=(prebuf[0]<<8)|prebuf[1];
 			for(unsigned int j=0;j<temp_short;j++)
 			{
 				// Based from extb.c, it just skips the attribute.
@@ -163,15 +151,19 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 					}
 				}
 			}
-			memory_buffer.read(reinterpret_cast<char*>(&Subimgs),2);
+			memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
 		}
 
-		Subimgs=ntohs(Subimgs);
+		Subimgs=(prebuf[0]<<8)|prebuf[1];
 		if(Subimgs>1)
 		{
 			// Currently not supported. It breaks the TextureImage structure
+			TextureImage* t;
 			for(std::vector<TextureImage*>::iterator k=imageListTemp.begin();k!=imageListTemp.end();k++)
-				LIBTEXB_FREE((*k));
+			{
+				t=*k;
+				LIBTEXB_FREE(t);
+			}
 			LIBTEXB_FREE(temp_buffer);
 			LIBTEXB_FREE(timg);
 			LIBTEXB_FREE(texb);
@@ -180,23 +172,25 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		uint8_t verts=memory_buffer.get();
 		uint8_t idxs=memory_buffer.get();
 
-		memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-		timg->Width=ntohs(temp_short);
-		memory_buffer.read(reinterpret_cast<char*>(&temp_short),2);
-		timg->Height=ntohs(temp_short);
+		memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
+		timg->Width=(prebuf[0]<<8)|prebuf[1];
+		timg->Height=(prebuf[2]<<8)|prebuf[3];
 
-		uint16_t cx=0,cy=0;
+		/*
 		memory_buffer.read(reinterpret_cast<char*>(&cx),2);
 		memory_buffer.read(reinterpret_cast<char*>(&cy),2);
-		cx=ntohs(cx);
-		cy=ntohs(cy);
+		*/
+		memory_buffer.seekg(4,std::ios::cur);
 
 		uint32_t vsize=verts*sizeof(uint32_t)*4;
 		uint32_t* vibuf=reinterpret_cast<uint32_t*>(LIBTEXB_ALLOC(uint8_t,vsize+idxs));
-		memory_buffer.read(reinterpret_cast<char*>(vibuf),vsize+idxs);
 		for(unsigned int l=0;l<verts*4;l++)
-			vibuf[l]=ntohl(vibuf[l]);
+		{
+			memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
+			vibuf[l]=(prebuf[0]<<24)|(prebuf[1]<<16)|(prebuf[2]<<8)|prebuf[3];
+		}
 
+		memory_buffer.read(reinterpret_cast<char*>(vibuf)+vsize,idxs);
 		LIBTEXB_FREE(temp_buffer);
 		imageListTemp.push_back(timg);
 		texb->VertexIndexUVs.push_back(vibuf);
@@ -333,7 +327,7 @@ TextureBank* TextureBank::FromFile(std::string Filename)
 
 	size_t texb_size=0;
 	fread(buffer,4,1,file);
-	texb_size=ntohl(*(unsigned long*)buffer)+8;
+	texb_size=((buffer[0]<<24)|(buffer[1]<<16)|(buffer[2]<<8)|buffer[3])+8;
 
 	LIBTEXB_FREE(buffer);
 	buffer=LIBTEXB_ALLOC(uint8_t,texb_size);	// TEXB magic number + 32-bit size = 8

@@ -20,17 +20,6 @@
 #include <lodepng.h>
 #include <zlib.h>
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <WinSock2.h>
-#else
-#include <arpa/inet.h>
-#endif
-
-
 struct AppendStringVisitor:public TCLAP::Visitor
 {
 	std::string append;
@@ -167,8 +156,11 @@ int main(int argc,char* argv[])
 		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString("1.0.3\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString("1.0.4\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
+#ifdef _DEBUG
+	VersionString.append(" (debug)");
+#endif
 	using namespace TCLAP;
 	std::string CmdLineOrder;
 	AppendStringVisitor AppendE("e",&CmdLineOrder);
@@ -228,19 +220,25 @@ int main(int argc,char* argv[])
 		TextureImage* temp_timg=NULL;
 		FILE* tempf=NULL;
 		std::string link_path=getDirectory(inputPath.c_str());
+		uint8_t prebuf[4];
+
 		show_information_once(texb,inputPath);
 
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{
 			temp_timg=*i;
 			std::string filename=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png.imag";
-			uint32_t temp=htonl(texb->Name.length()+6);
+			uint32_t temp=texb->Name.length()+6;
+			prebuf[0]=temp>>24;
+			prebuf[1]=(temp>>16)&255;
+			prebuf[2]=(temp>>8)&255;
+			prebuf[3]=temp&255;
 
 			std::cerr << "Writing: " << filename << std::endl;
 			tempf=fopen((link_path+filename).c_str(),"wb");
 			fwrite("LINK",4,1,tempf);
-			fwrite(&temp,4,1,tempf);
-			fwrite((texb->Name+".texb").c_str(),1,ntohl(temp),tempf);
+			fwrite(prebuf,4,1,tempf);
+			fwrite((texb->Name+".texb").c_str(),1,temp,tempf);
 			fclose(tempf);
 		}
 
