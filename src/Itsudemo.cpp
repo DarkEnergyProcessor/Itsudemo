@@ -35,7 +35,9 @@ struct AppendStringVisitor:public TCLAP::Visitor
 	}
 };
 
+uint16_t g_TexbFlags=0;
 //int main_interactive();
+std::string create_texb_attribute(uint16_t texb_flags);
 
 std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uint32_t& w,uint32_t& h)
 {
@@ -50,6 +52,7 @@ std::vector<uint8_t> getRawImageFromTEXB(TextureBank* texb,std::string& name,uin
 	h=timg->Height;
 	return std::vector<uint8_t>(timg->RawImage,timg->RawImage+w*h*4);
 }
+
 
 inline const char* getBasename(const char* path)
 {
@@ -76,6 +79,8 @@ void show_information_once(TextureBank* texb,const std::string path)
 	TextureImage* temp_timg=NULL;
 
 	std::cerr << "File: " << path << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
+	std::cerr << "Name: " << texb->Name << std::endl;
+	std::cerr << "Attributes: " << create_texb_attribute(texb->Flags) << std::endl;
 	std::cerr << "Image(s): " << timg_list.size() << std::endl;
 	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 	{
@@ -145,6 +150,49 @@ bool parse_timg_path(const std::string& from,std::string* to,bool path_necessary
 	return true;
 }
 
+std::string texb_image_image_info(uint16_t texb_flags) {
+	uint8_t pix_format=uint8_t(texb_flags)>>6;
+	uint8_t img_format=texb_flags&7;
+	if (pix_format==3) {
+		switch (img_format) {
+			case 1:
+				return "LUMA 1 Byte/Pixel";
+			case 0:
+				return "ALPHA 1 Byte/Pixel";
+			case 2:
+				return "LUMALPHA 2 Bytes/Pixel";
+			case 3:
+				return "RGB 3 Bytes/Pixel";
+			default:
+				return "RGBA 4 Bytes/Pixel";
+		}
+	} else {
+		switch(pix_format) {
+			case 0:
+				return "RGB565 2 Bytes/Pixel";
+			case 2:
+				return "RGBA4444 2 Bytes/Pixel";
+			case 1:
+				return "RGBA5551 2 Bytes/Pixel";
+			default:
+				return "Unknown";
+		}
+	}
+}
+
+std::string create_texb_attribute(uint16_t texb_flags)
+{
+	std::string img=texb_image_image_info(texb_flags);
+	std::string temp;
+	if(texb_flags&8) temp.append("compressed ");
+	else temp.append("uncompressed ");
+	if(texb_flags&16) temp.append("mipmap ");
+	if(texb_flags&32) temp.append("double-buffered ");
+	temp.append(img);
+
+	return temp;
+}
+
 int main(int argc,char* argv[])
 {
 	if(argc<2)
@@ -156,7 +204,7 @@ int main(int argc,char* argv[])
 		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString("1.0.4\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString("1.0.5\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 #ifdef _DEBUG
 	VersionString.append(" (debug)");

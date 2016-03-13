@@ -85,6 +85,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	uint16_t TexbFlags=0;
 	memory_buffer.read(reinterpret_cast<char*>(prebuf),2);
 	TexbFlags=(prebuf[0]<<8)|prebuf[1];
+	texb->_Flags=TexbFlags;
 
 	// Vertex & Index count
 	uint16_t VertexCount=0;

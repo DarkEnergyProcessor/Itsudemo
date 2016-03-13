@@ -13,12 +13,25 @@ endif
 
 # Check if we are compiling for Windows
 ifeq ($(OS),Windows_NT)
+# However, if PREFIX is set, it's possible that we are cross-compiling, so don't set it if prefix is set
+ifndef PREFIX
 RC_CMD := windres -O coff Info.rc Info.res
 RC_FILE := Info.res
 else
 ifneq (,$(findstring mingw32,$(PREFIX)))
 RC_CMD := $(xPREFIX)windres -O coff Info.rc Info.res
 RC_FILE := Info.res
+else
+RC_CMD :=
+RC_FILE :=
+endif
+endif
+else
+ifneq (,$(findstring mingw32,$(PREFIX)))
+RC_CMD := $(xPREFIX)windres -O coff Info.rc Info.res
+RC_FILE := Info.res
+# MinGW32 Cross compiler doesn't automatically append .exe
+EXTENSION_APPEND := .exe
 else
 RC_CMD :=
 RC_FILE :=
@@ -39,7 +52,7 @@ gcc:
 	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
 	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
 	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
-	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(RC_FILE))
+	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo$(EXTENSION_APPEND) *.o $(RC_FILE))
 	$(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK)))))
 	-rm *.o $(RC_FILE)
 

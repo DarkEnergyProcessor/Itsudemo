@@ -14,12 +14,13 @@
 #include <cstdlib>
 #include <cstring>
 
-TextureBank::TextureBank(uint32_t _Width,uint32_t _Height):Width(RawImageWidth),Height(RawImageHeight)
+TextureBank::TextureBank(uint32_t _Width,uint32_t _Height):Width(RawImageWidth),Height(RawImageHeight),Flags(_Flags)
 {
 	uint32_t rawimage_size=_Width*_Height*4;
 	RawImageWidth=_Width;
 	RawImageHeight=_Height;
 	RawImage=LIBTEXB_ALLOC(uint8_t,rawimage_size);	// 4-byte/pixel
+	_Flags=0;
 
 	memset(RawImage,0,rawimage_size);
 }
