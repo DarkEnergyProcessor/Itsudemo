@@ -6,13 +6,26 @@ WHERE_TCLAP?=./tclap-1.2.1
 CFLAGS?=
 NDK_BUILD ?= ndk-build
 
+# Append dash
+ifdef PREFIX
+xPREFIX = $(PREFIX)-
+endif
+
+# Check if we are compiling for Windows
 ifeq ($(OS),Windows_NT)
 RC_CMD := windres -O coff Info.rc Info.res
+RC_FILE := Info.res
+else
+ifneq (,$(findstring mingw32,$(PREFIX)))
+RC_CMD := $(xPREFIX)windres -O coff Info.rc Info.res
 RC_FILE := Info.res
 else
 RC_CMD :=
 RC_FILE :=
 endif
+endif
+
+# Debug flags
 RELEASE_GCC_CMD := -O3
 RELEASE_MSV_CMD := -Ox -MT
 DEBUG_GCC_CMD :=
@@ -23,10 +36,10 @@ all: gcc
 
 gcc:
 	$(RC_CMD)
-	g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
-	gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
+	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
+	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
 	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
-	$(eval EXPAND_LINK = g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(RC_FILE))
+	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo *.o $(RC_FILE))
 	$(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK)))))
 	-rm *.o $(RC_FILE)
 

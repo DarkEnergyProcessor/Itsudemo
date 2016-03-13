@@ -138,7 +138,7 @@ public:
 	// Warning: can be slow if called repeatedly
 	void ReflectChanges();
 	
-	friend TextureImage;
+	friend class TextureImage;
 };
 
 struct TextureImage
@@ -166,7 +166,7 @@ public:
 	// Name of this image without .png.imag
 	std::string Name;
 
-	friend TextureBank;
+	friend class TextureBank;
 };
 
 typedef TextureBank TEXB;
