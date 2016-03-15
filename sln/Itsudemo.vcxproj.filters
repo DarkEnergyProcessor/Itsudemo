@@ -10,6 +10,9 @@
     <Filter Include="lodepng">
       <UniqueIdentifier>{b7a62e47-4c76-4b89-83f3-01e51e1db928}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HonokaMiku">
+      <UniqueIdentifier>{83a0b5cb-8a86-4bd9-9323-76e018e98bc3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\zlib-1.2.8\zutil.c">
@@ -67,6 +70,12 @@
       <Filter>lodepng</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Itsudemo.cpp" />
+    <ClCompile Include="..\HonokaMiku-2.3.1\JP_Decrypter.cc">
+      <Filter>HonokaMiku</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HonokaMiku-2.3.1\V2_Decrypter.cc">
+      <Filter>HonokaMiku</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\Info.rc" />

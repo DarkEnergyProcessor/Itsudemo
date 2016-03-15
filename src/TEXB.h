@@ -75,6 +75,8 @@ public:
 	uint8_t* RawImage;
 	// Texture bank flags when decoded with FromFile or FromMemory
 	const uint16_t& Flags;
+	// HonokaMiku encryption type when decoded
+	uint8_t EncryptMode;
 	// Creates TextureBank from specificed width and height.
 	// It's recommended that the width and the height is power of 2, but width and height doesn't need to be equal
 	// Example: 1024x512 is acceptable width and height

@@ -5,6 +5,8 @@
 
 #include "TEXB.h"
 
+#include "DecrypterContext.h"
+
 #include <string>
 #include <sstream>
 #include <vector>
@@ -17,6 +19,9 @@
 #include <stdint.h>
 
 #include <zlib.h>
+
+// Declared in Itsudemo.cpp
+extern char* g_EncryptedBasename;
 
 int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t CompressLevel)
 {
@@ -41,29 +46,16 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	sstream.write((Name+".texb").c_str(),nameSize-1);
 	if(nameSize%2==1) sstream.put(0);
 
-	/*temp_short=htons(RawImageWidth);
-	sstream.write(reinterpret_cast<char*>(&temp_short),2);
-	temp_short=htons(RawImageHeight);
-	*/
 	prebuf[0]=RawImageWidth>>8;
 	prebuf[1]=RawImageWidth&255;
 	prebuf[2]=RawImageHeight>>8;
 	prebuf[3]=RawImageHeight&255;
 	sstream.write(reinterpret_cast<char*>(prebuf),4);
 
-	//temp_short=htons(CompressLevel>0?204:196);
 	prebuf[0]=0;
 	prebuf[1]=CompressLevel>0?204:196;
 	sstream.write(reinterpret_cast<char*>(prebuf),2);
 
-	/*uint32_t TotalVertexLocation=sstream.tellp();
-	uint16_t tImgs=ImageList_Id.size();
-	uint16_t tVrtx=htons(tImgs*4);
-	uint16_t tIndx=htons(tImgs*6);
-	temp_short=htons(tImgs);
-	sstream.write(reinterpret_cast<char*>(&tVrtx),2);
-	sstream.write(reinterpret_cast<char*>(&tIndx),2);
-	sstream.write(reinterpret_cast<char*>(&temp_short),2);*/
 	uint16_t tImgs=ImageList_Id.size();
 	temp_short=tImgs*4;
 	prebuf[0]=temp_short>>8;
@@ -91,10 +83,6 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 		if(nameSize%2==1) sstream.put(0);
 
 		sstream.write("\xFF\xFF\x00\x01\x00\x00\x00\x00\x00\x01\x00\x01\x04\x06",14);
-		/*temp_short=htons(cur->Width);
-		sstream.write(reinterpret_cast<char*>(&temp_short),2);
-		temp_short=htons(cur->Height);
-		sstream.write(reinterpret_cast<char*>(&temp_short),2);*/
 		prebuf[0]=cur->Width>>8;
 		prebuf[1]=cur->Width&255;
 		prebuf[2]=cur->Height>>8;
@@ -188,6 +176,14 @@ int32_t TextureBank::SaveToFile(std::string Filename,uint32_t CompressLevel)
 	ret=SaveToMemory(&temp_buffer,&bufsize,CompressLevel);
 	if(ret==0)
 	{
+		if(EncryptMode>0)
+		{
+			uint8_t* hdr_buf=new uint8_t[16];
+			Dctx* dctx=__DctxEncryptSetupWrapper(g_EncryptedBasename==NULL?Filename.c_str():g_EncryptedBasename,EncryptMode,hdr_buf);
+
+			dctx->decrypt_block(temp_buffer,bufsize);
+			fwrite(hdr_buf,1,EncryptMode==2?16:4,fptr);
+		}
 		fwrite(temp_buffer,1,bufsize,fptr);
 		fclose(fptr);
 	}

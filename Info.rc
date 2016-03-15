@@ -14,12 +14,12 @@ BEGIN
 		BEGIN
 			VALUE "CompanyName", "Dark Energy Processor Corporation"
 			VALUE "FileDescription", "TEXB Manipulation Tool"
-			VALUE "FileVersion", "1.0.5.0"
+			VALUE "FileVersion", "1.0.5.0 HonokaMiku-enabled"
 			VALUE "InternalName", "Itsudemo.exe"
 			VALUE "LegalCopyright", "Copyright © 2037 Dark Energy Processor Corporation"
 			VALUE "OriginalFilename", "Itsudemo.exe"
 			VALUE "ProductName", "Itsudemo"
-			VALUE "ProductVersion", "1.0.5.0"
+			VALUE "ProductVersion", "1.0.5.0 HonokaMiku-enabled"
 		END
 	END
 	BLOCK "VarFileInfo"

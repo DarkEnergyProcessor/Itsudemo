@@ -3,6 +3,7 @@
 WHERE_ZLIB?=./zlib-1.2.8
 WHERE_LODEPNG?=./lodepng
 WHERE_TCLAP?=./tclap-1.2.1
+WHERE_HONOKAMIKU?=./HonokaMiku-2.3.1
 CFLAGS?=
 NDK_BUILD ?= ndk-build
 
@@ -49,10 +50,10 @@ all: gcc
 
 gcc:
 	$(RC_CMD)
-	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c lodepng/lodepng.cpp src/*.cpp
-	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c zlib-1.2.8/*.c
+	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c $(WHERE_LODEPNG)/lodepng.cpp $(WHERE_HONOKAMIKU)/*.cc src/*.cpp
+	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) -c $(WHERE_ZLIB)/*.c
 	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
-	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -o Itsudemo$(EXTENSION_APPEND) *.o $(RC_FILE))
+	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CFLAGS) -o Itsudemo$(EXTENSION_APPEND) *.o $(RC_FILE))
 	$(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK)))))
 	-rm *.o $(RC_FILE)
 
@@ -71,7 +72,7 @@ vscmd:
 	@where cl.exe
 	@where link.exe
 	@where rc.exe
-	@cl -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp
+	@cl -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp HonokaMiku-2.3.1\\*.cc
 	@rc -v -l 0 Info.rc
 	@link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT $(DEBUG_MSV_CMD) -RELEASE -SUBSYSTEM:CONSOLE *.obj Info.res
 	@rm *.obj Info.res

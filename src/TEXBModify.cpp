@@ -21,6 +21,7 @@ TextureBank::TextureBank(uint32_t _Width,uint32_t _Height):Width(RawImageWidth),
 	RawImageHeight=_Height;
 	RawImage=LIBTEXB_ALLOC(uint8_t,rawimage_size);	// 4-byte/pixel
 	_Flags=0;
+	EncryptMode=0;
 
 	memset(RawImage,0,rawimage_size);
 }

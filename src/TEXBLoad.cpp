@@ -7,6 +7,8 @@
 #include "TEXBPixel.h"
 #include "xy2uv.h"
 
+#include <DecrypterContext.h>
+
 #include <string>
 #include <sstream>
 #include <vector>
@@ -21,6 +23,8 @@
 #include <stdint.h>
 
 #include <zlib.h>
+
+extern char* g_EncryptedBasename;
 
 uint8_t GetBytePerPixel(uint16_t TexbFlags)
 {
@@ -306,18 +310,39 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	return texb;
 }
 
+// Only TextureBank::FromFile supports SIF-encrypted file. FromMemory doesn't
 TextureBank* TextureBank::FromFile(std::string Filename)
 {
 	TextureBank* texb;
 	FILE* file;
 	uint8_t* buffer;
+	uint8_t game_encrypt=0;
+	long seek_position=0;
+	Dctx* dctx;
 
 	file=fopen(Filename.c_str(),"rb");
 	if(file==NULL)
 		LIBTEXB_FAILEXIT;
 
-	buffer=LIBTEXB_ALLOC(uint8_t,4);
-	fread(buffer,4,1,file);
+	buffer=LIBTEXB_ALLOC(uint8_t,16);
+	fread(buffer,16,1,file);
+
+	// Attempt to decrypt
+	dctx=__DctxGetBest(buffer,g_EncryptedBasename==NULL?Filename.c_str():g_EncryptedBasename,&game_encrypt);
+	if(dctx!=NULL)
+	{
+		if(game_encrypt==2)
+			// SIF JP. 16-byte header. Encryption V3
+			seek_position=16;
+		else
+			// Encryption V2
+			seek_position=4;
+
+		fseek(file,seek_position,SEEK_SET);
+		fread(buffer,1,4,file);
+		dctx->decrypt_block(buffer,4);
+	}
+
 	if(memcmp(buffer,"TEXB",4)!=0)
 	{
 		// Not a TEXB file
@@ -328,11 +353,17 @@ TextureBank* TextureBank::FromFile(std::string Filename)
 
 	size_t texb_size=0;
 	fread(buffer,4,1,file);
-	texb_size=((buffer[0]<<24)|(buffer[1]<<16)|(buffer[2]<<8)|buffer[3])+8;
+
+	if(dctx) dctx->decrypt_block(buffer,4);
+
+	texb_size=((buffer[0]<<24)|(buffer[1]<<16)|(buffer[2]<<8)|buffer[3])+8;	// TEXB magic number + 32-bit size = 8
 
 	LIBTEXB_FREE(buffer);
-	buffer=LIBTEXB_ALLOC(uint8_t,texb_size);	// TEXB magic number + 32-bit size = 8
-	fseek(file,0,SEEK_SET);
+	buffer=LIBTEXB_ALLOC(uint8_t,texb_size);
+	fseek(file,seek_position,SEEK_SET);
+
+	if(dctx) dctx->goto_offset(-8);	// Relative positioning.
+
 	if(fread(buffer,1,texb_size,file)!=texb_size)
 	{
 		fclose(file);
@@ -344,6 +375,7 @@ TextureBank* TextureBank::FromFile(std::string Filename)
 #ifndef LIBTEXB_NO_EXCEPTION
 	try {
 #endif
+	if(dctx) dctx->decrypt_block(buffer,texb_size);
 	texb=FromMemory(buffer,texb_size);
 #ifndef LIBTEXB_NO_EXCEPTION
 	} catch(int& v) {
@@ -352,6 +384,7 @@ TextureBank* TextureBank::FromFile(std::string Filename)
 	}
 #endif
 
+	texb->EncryptMode=game_encrypt;
 	LIBTEXB_FREE(buffer);
 	return texb;
 }

@@ -54,7 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\tclap-1.2.1;..\zlib-1.2.8;..\lodepng</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\tclap-1.2.1;..\zlib-1.2.8;..\lodepng;..\HonokaMiku-2.3.1</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\tclap-1.2.1;..\zlib-1.2.8;..\lodepng</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\tclap-1.2.1;..\zlib-1.2.8;..\lodepng;..\HonokaMiku-2.3.1</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,6 +80,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\HonokaMiku-2.3.1\JP_Decrypter.cc" />
+    <ClCompile Include="..\HonokaMiku-2.3.1\V2_Decrypter.cc" />
     <ClCompile Include="..\lodepng\lodepng.cpp" />
     <ClCompile Include="..\src\Itsudemo.cpp" />
     <ClCompile Include="..\src\TEXBFetch.cpp" />

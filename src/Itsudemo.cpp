@@ -6,6 +6,8 @@
 #include "TEXB.h"
 #include "CompilerName.h"
 
+#include <DecrypterContext.h>
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -36,6 +38,7 @@ struct AppendStringVisitor:public TCLAP::Visitor
 };
 
 uint16_t g_TexbFlags=0;
+char* g_EncryptedBasename=NULL;
 //int main_interactive();
 std::string create_texb_attribute(uint16_t texb_flags);
 
@@ -80,6 +83,8 @@ void show_information_once(TextureBank* texb,const std::string path)
 
 	std::cerr << "File: " << path << std::endl << "Size: " << texb->Width << "x" << texb->Height << " pixels" << std::endl;
 	std::cerr << "Name: " << texb->Name << std::endl;
+	if(texb->EncryptMode>0)
+		std::cerr << "Encrypted: SIF " << GameFileEncryptedName[texb->EncryptMode] << " encrypted" << std::endl;
 	std::cerr << "Attributes: " << create_texb_attribute(texb->Flags) << std::endl;
 	std::cerr << "Image(s): " << timg_list.size() << std::endl;
 	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
@@ -204,7 +209,7 @@ int main(int argc,char* argv[])
 		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString("1.0.5\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString("1.0.5 HonokaMiku-enabled\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 #ifdef _DEBUG
 	VersionString.append(" (debug)");
@@ -215,9 +220,10 @@ int main(int argc,char* argv[])
 	AppendStringVisitor AppendN("n",&CmdLineOrder);
 	AppendStringVisitor AppendR("r",&CmdLineOrder);
 	CmdLine CommandLine("Itsudemo. TEXB Manipulation tool\nCopyright (c) 2037 Dark Energy Processor Corporation",' ',VersionString);
-	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout",CommandLine,false);
-	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
-	SwitchArg SwitchD("d","dump-all","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
+	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout.",CommandLine,false);
+	ValueArg<std::string> SwitchB("b","basename","Sets basename for encrypted TEXB.",false,"","basename",CommandLine);
+	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression.",false,6,"0-9",CommandLine);
+	SwitchArg SwitchD("d","dump-all","Dump all images, including the texture to PNG in the TEXB directory.",CommandLine,false);
 	MultiArg<std::string> SwitchE("e","extract-image","Extract specificed TIMG image in TEXB.",false,"timg name>:<png out path",CommandLine,&AppendE);
 	SwitchArg SwitchG("g","generate-link","Create .png.imag (LINK file) at current TEXB directory.",CommandLine,false);
 	SwitchArg SwitchI("i","dump-images","Dump all images, excluding the texture bank raw image.",CommandLine,false);
@@ -225,7 +231,7 @@ int main(int argc,char* argv[])
 	ValueArg<std::string> SwitchO("o","output","Specify output of the TEXB file. Defaults to input file which means overwrite it",false,"","output texb",CommandLine);
 	MultiArg<std::string> SwitchR("r","replace","Replace TIMG with PNG in TEXB.",false,"timg name>:<png in path",CommandLine,&AppendR);
 	SwitchArg SwitchT("t","dump-texb","Dump texture bank raw image only.",CommandLine,false);
-	UnlabeledValueArg<std::string> TEXBInput("input","Input TEXB File location",true,"","input texb",CommandLine);
+	UnlabeledValueArg<std::string> TEXBInput("input","Input TEXB File location.",true,"","input texb",CommandLine);
 
 	try
 	{
@@ -235,6 +241,16 @@ int main(int argc,char* argv[])
 	{
 		std::cerr << "Error: " << e.error() << " for arg " << e.argId() << std::endl;
 		return -1;
+	}
+	
+	// Check for basename first.
+	if(SwitchB.isSet())
+	{
+		std::string val=SwitchB.getValue();
+		const char* temp_char=__DctxGetBasename(val.c_str());
+		size_t size=strlen(temp_char)+1;
+		g_EncryptedBasename=new char[size];
+		memcpy(g_EncryptedBasename,temp_char,size);
 	}
 
 	TextureBank* texb=NULL;
@@ -481,6 +497,7 @@ int main(int argc,char* argv[])
 	if(isTexbModified)
 		texb->SaveToFile(TEXBOutput,SwitchC.getValue());
 
+	if(g_EncryptedBasename) delete[] g_EncryptedBasename;
 	delete texb;
 	return 0;
 }
