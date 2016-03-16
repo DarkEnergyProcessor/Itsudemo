@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <cstring>
 
+#include <exception>
+#include <stdexcept>
+
 const char GameFileEncryptedName[6][3]={
 	"XX",	// Unused.
 	"EN",
