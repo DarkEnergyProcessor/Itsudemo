@@ -50,7 +50,7 @@ all: gcc
 
 gcc:
 	$(RC_CMD)
-	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) $(CFLAGS) -c $(WHERE_LODEPNG)/lodepng.cpp $(WHERE_HONOKAMIKU)/*.cc src/*.cpp
+	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CFLAGS) -c $(WHERE_LODEPNG)/lodepng.cpp $(WHERE_HONOKAMIKU)/*.cc src/*.cpp
 	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) -c $(WHERE_ZLIB)/*.c
 	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
 	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CFLAGS) -o Itsudemo$(EXTENSION_APPEND) *.o $(RC_FILE))
