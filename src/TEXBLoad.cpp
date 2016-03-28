@@ -342,6 +342,8 @@ TextureBank* TextureBank::FromFile(std::string Filename)
 		fread(buffer,1,4,file);
 		dctx->decrypt_block(buffer,4);
 	}
+	else
+		fseek(file,4,SEEK_SET);
 
 	if(memcmp(buffer,"TEXB",4)!=0)
 	{

@@ -5,6 +5,8 @@ WHERE_LODEPNG?=./lodepng
 WHERE_TCLAP?=./tclap-1.2.1
 WHERE_HONOKAMIKU?=./HonokaMiku-2.3.1
 CFLAGS?=
+CXXFLAGS?=
+LDFLAGS?=
 NDK_BUILD ?= ndk-build
 
 # Append dash
@@ -46,16 +48,19 @@ DEBUG_GCC_CMD :=
 DEBUG_MSV_CMD :=
 NDK_DEBUG :=
 
-all: gcc
+# GCC object files
+GCC_FILES=adler32.o compress.o crc32.o deflate.o infback.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o lodepng.o
+GCC_FILES+=JP_Decrypter.o V2_Decrypter.o TEXBFetch.o TEXBLoad.o TEXBModify.o TEXBPixel.o TEXBSave.o TIMG.o Itsudemo.o
+MSVC_FILES=adler32.obj compress.obj crc32.obj deflate.obj infback.obj inffast.obj inflate.obj inftrees.obj trees.obj uncompr.obj zutil.obj lodepng.obj
+MSVC_FILES+=JP_Decrypter.obj V2_Decrypter.obj TEXBFetch.obj TEXBLoad.obj TEXBModify.obj TEXBPixel.obj TEXBSave.obj TIMG.obj Itsudemo.obj Info.res
 
-gcc:
+
+all: itsudemo
+
+itsudemo: $(GCC_FILES)
 	$(RC_CMD)
-	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CFLAGS) -c $(WHERE_LODEPNG)/lodepng.cpp $(WHERE_HONOKAMIKU)/*.cc src/*.cpp
-	$(xPREFIX)gcc $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) -c $(WHERE_ZLIB)/*.c
-	#Something is really wrong with MinGW. Attempt 5 times to generate the executable.
-	$(eval EXPAND_LINK = $(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CFLAGS) -o Itsudemo$(EXTENSION_APPEND) *.o $(RC_FILE))
-	$(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK) || ($(EXPAND_LINK)))))
-	-rm *.o $(RC_FILE)
+	$(xPREFIX)g++ $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -o Itsudemo$(EXTENSION_APPEND) $(CFLAGS) $(LDFLAGS) $(GCC_FILES) $(RC_FILE)
+	-rm $(GCC_FILES) $(RC_FILE)
 
 ndk:
 	$(NDK_BUILD) APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk NDK_PROJECT_PATH=. $(NDK_DEBUG)
@@ -66,28 +71,164 @@ ndk:
 	done
 	-rm -R obj
 	-rm -R libs
-
+ifeq ($(VSINSTALLDIR),)
 vscmd:
-	-mkdir -p bin/vscmd
-	@where cl.exe
-	@where link.exe
-	@where rc.exe
-	@cl -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) src\\*.c* zlib-1.2.8\\*.c lodepng\\lodepng.cpp HonokaMiku-2.3.1\\*.cc
-	@rc -v -l 0 Info.rc
-	@link -OUT:"bin\\vscmd\\Itsudemo.exe" -MANIFEST -NXCOMPAT $(DEBUG_MSV_CMD) -RELEASE -SUBSYSTEM:CONSOLE *.obj Info.res
-	@rm *.obj Info.res
+	@echo "Run from Visual Studio command prompt!"
+	@false
+else
+vscmd: $(MSVC_FILES)
+	link -OUT:"bin\\vscmd\\Itsudemo.exe" -NXCOMPAT $(DEBUG_MSV_CMD) -RELEASE -SUBSYSTEM:CONSOLE $(LDFLAGS) $(MSVC_FILES)
+endif
 
 clean:
-	-rm *.obj *.o Info.res
-	-rm -R obj
-	-rm -R libs
+	-@rm Info.res
+	-@rm $(GCC_FILES) $(MSVC_FILES)
+	-@rm -R obj
+	-@rm -R libs
 
-debug:
-	@echo Debug build.
-	$(eval RELEASE_GCC_CMD = -O0)
-	$(eval RELEASE_MSV_CMD = -Od -D"_DEBUG" -MTd)
-	$(eval DEBUG_GCC_CMD = -g -D_DEBUG)
-	$(eval DEBUG_MSV_CMD = -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG)
-	$(eval NDK_DEBUG = NDK_DEBUG=1)
+#####################
+# GCC object files  #
+#####################
 
-.PHONY: all gcc ndk vscmd debug
+# zLib files.
+adler32.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/adler32.c
+
+compress.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/compress.c
+
+crc32.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/crc32.c
+
+deflate.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/deflate.c
+
+infback.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/infback.c
+
+inffast.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/inffast.c
+
+inflate.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/inflate.c
+
+inftrees.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/inftrees.c
+
+trees.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/trees.c
+
+uncompr.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/uncompr.c
+
+zutil.o:
+	$(xPREFIX)gcc -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CFLAGS) $(WHERE_ZLIB)/zutil.c
+
+# lodepng file
+lodepng.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) $(WHERE_LODEPNG)/lodepng.cpp
+
+# HonokaMiku files if HonokaMiku-enabled is used
+JP_Decrypter.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) $(WHERE_HONOKAMIKU)/JP_Decrypter.cc
+
+V2_Decrypter.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) $(WHERE_HONOKAMIKU)/V2_Decrypter.cc
+
+# Itsudemo and libTEXB files
+TEXBFetch.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) src/TEXBFetch.cpp
+
+TEXBLoad.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/TEXBLoad.cpp
+
+TEXBModify.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) src/TEXBModify.cpp
+
+TEXBPixel.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) src/TEXBPixel.cpp
+
+TEXBSave.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/TEXBSave.cpp
+
+TIMG.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) $(CXXFLAGS) src/TIMG.cpp
+
+Itsudemo.o:
+	$(xPREFIX)g++ -c $(RELEASE_GCC_CMD) $(DEBUG_GCC_CMD) -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/Itsudemo.cpp
+
+#####################
+# MSVC object files #
+#####################
+
+# zLib files.
+adler32.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/adler32.c
+
+compress.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/compress.c
+
+crc32.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/crc32.c
+
+deflate.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/deflate.c
+
+infback.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/infback.c
+
+inffast.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/inffast.c
+
+inflate.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/inflate.c
+
+inftrees.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/inftrees.c
+
+trees.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/trees.c
+
+uncompr.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/uncompr.c
+
+zutil.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CFLAGS) $(WHERE_ZLIB)/zutil.c
+
+# lodepng file
+lodepng.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) $(WHERE_LODEPNG)/lodepng.cpp
+
+# HonokaMiku files if HonokaMiku-enabled is used
+JP_Decrypter.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) $(WHERE_HONOKAMIKU)/JP_Decrypter.cc
+
+V2_Decrypter.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) $(WHERE_HONOKAMIKU)/V2_Decrypter.cc
+
+# Itsudemo and libTEXB files
+TEXBFetch.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) src/TEXBFetch.cpp
+
+TEXBLoad.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/TEXBLoad.cpp
+
+TEXBModify.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) src/TEXBModify.cpp
+
+TEXBPixel.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) src/TEXBPixel.cpp
+
+TEXBSave.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/TEXBSave.cpp
+
+TIMG.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c $(CXXFLAGS) src/TIMG.cpp
+
+Itsudemo.obj:
+	cl -nologo -W3 -Zc:wchar_t $(RELEASE_MSV_CMD) -wd"4996" -D"WIN32" -D"_CONSOLE" -EHsc -c -I$(WHERE_ZLIB) -I$(WHERE_LODEPNG) -I$(WHERE_TCLAP) -I$(WHERE_HONOKAMIKU) $(CXXFLAGS) src/Itsudemo.cpp
+
+Info.res:
+	rc -v -l 0 Info.rc
+
+.PHONY: all itsudemo ndk vscmd clean
