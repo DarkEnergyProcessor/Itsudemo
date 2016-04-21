@@ -86,6 +86,14 @@ clean:
 	-@rm -R obj
 	-@rm -R libs
 
+debug:
+	@echo Debug build.
+	$(eval RELEASE_GCC_CMD = -O0)
+	$(eval RELEASE_MSV_CMD = -Od -D"_DEBUG" -MTd)
+	$(eval DEBUG_GCC_CMD = -g -D_DEBUG)
+	$(eval DEBUG_MSV_CMD = -PDB:"bin\\vscmd\\Itsudemo.pdb" -DEBUG)
+	$(eval NDK_DEBUG = NDK_DEBUG=1)
+
 #####################
 # GCC object files  #
 #####################
@@ -231,4 +239,4 @@ Itsudemo.obj:
 Info.res:
 	rc -v -l 0 Info.rc
 
-.PHONY: all itsudemo ndk vscmd clean
+.PHONY: all itsudemo ndk vscmd clean debug

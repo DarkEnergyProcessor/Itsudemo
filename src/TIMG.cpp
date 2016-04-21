@@ -10,17 +10,16 @@
 
 TextureImage::TextureImage(uint32_t width,uint32_t height,uint8_t* raw_image)
 {
-	if(raw_image==NULL)
-	{
-		uint32_t size=width*height*4;
-		raw_image=LIBTEXB_ALLOC(uint8_t,size);
-		memset(raw_image,255,size);
-	}
-
+	uint32_t size=width*height*4;
 	Width=width;
 	Height=height;
-	RawImage=raw_image;
 	from_texb=NULL;
+	RawImage=LIBTEXB_ALLOC(uint8_t,size);
+
+	if(raw_image==NULL)
+		memset(RawImage,255,size);
+	else
+		memcpy(RawImage,raw_image,size);
 }
 
 TextureImage::~TextureImage()
