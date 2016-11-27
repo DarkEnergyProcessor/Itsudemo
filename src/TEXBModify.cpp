@@ -182,13 +182,17 @@ void TextureBank::ReflectChanges()
 			{Vrtx[10]/65536.0,Vrtx[11]/65536.0},
 			{Vrtx[14]/65536.0,Vrtx[15]/65536.0}
 		};
+		uint32_t min_x = std::min(v[0].X, std::min(v[1].X, std::min(v[2].X, v[3].X)));
+		uint32_t min_y = std::min(v[0].Y, std::min(v[1].Y, std::min(v[2].Y, v[3].Y)));
+		uint32_t max_x = std::max(v[0].X, std::max(v[1].X, std::max(v[2].X, v[3].X)));
+		uint32_t max_y = std::max(v[0].Y, std::max(v[1].Y, std::max(v[2].Y, v[3].Y)));
 
-		for(uint32_t y=0;y<timg->Height;y++)
+		for(uint32_t y = min_y; y < max_y; y++)
 		{
-			for(uint32_t x=0;x<timg->Width;x++)
+			for(uint32_t x = min_x; x < max_x; x++)
 			{
-				UVPoint uv=xy2uv(x,y,v[0],v[1],v[2],v[3],t[0],t[1],t[2],t[3]);
-				texbBmp[uint32_t(uv.U*Width+0.5)+uint32_t(uv.V*Height+0.5)*Width]=rawBmp[x+y*timg->Width];
+				UVPoint uv=xy2uv(x, y, v[0], v[1], v[2], v[3], t[0], t[1], t[2], t[3]);
+				texbBmp[uint32_t(uv.U * Width + 0.5) + uint32_t(uv.V * Height + 0.5) * Width] = rawBmp[x + y * timg->Width];
 			}
 		}
 	}

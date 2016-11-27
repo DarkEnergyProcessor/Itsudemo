@@ -239,7 +239,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		else
 		{
 			// Upps, I don't know the kind of the compression.
-			FailAndExit:	// Visual Studio & GCC supports labels
+			FailAndExit:
 			for(std::vector<TextureImage*>::iterator k=imageListTemp.begin();k!=imageListTemp.end();k++)
 				LIBTEXB_FREE((*k));
 			LIBTEXB_FREE(texb);
@@ -253,7 +253,6 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	texb->ImageList_Id=imageListTemp;
 	LIBTEXB_FREE(rawData);
 
-	//for(std::vector<TextureImage*>::iterator i=imageListTemp.begin();i!=imageListTemp.end();i++)
 	for(uint32_t i=0;i<texb->ImageList_Id.size();i++)
 	{
 		TextureImage* timg=texb->ImageList_Id[i];
@@ -278,25 +277,24 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		// Check UV
 		for(uint32_t j=0;j<4;j++)
 		{
-			if(t[j].U>1.0) t[j].U=1;
-			if(t[j].V>1.0) t[j].V=1;
+			if(t[j].U>1.0) t[j].U = 1.0;
+			if(t[j].V>1.0) t[j].V = 1.0;
 		}
 
-		// Check width & height mismatch.
-		if(v[2].X-v[0].X>timg->Width)
-			timg->Width=v[2].X-v[0].X;
-		if(v[2].Y-v[0].Y>timg->Height)
-			timg->Height=v[2].Y-v[0].Y;
+		uint32_t min_x = std::min(v[0].X, std::min(v[1].X, std::min(v[2].X, v[3].X)));
+		uint32_t min_y = std::min(v[0].Y, std::min(v[1].Y, std::min(v[2].Y, v[3].Y)));
+		uint32_t max_x = std::max(v[0].X, std::max(v[1].X, std::max(v[2].X, v[3].X)));
+		uint32_t max_y = std::max(v[0].Y, std::max(v[1].Y, std::max(v[2].Y, v[3].Y)));
 
-		rawBmp=LIBTEXB_ALLOC(uint32_t,timg->Width*timg->Height);
+		rawBmp=LIBTEXB_ALLOC(uint32_t, timg->Width * timg->Height);
 
-		memset(rawBmp,0,timg->Width*timg->Height*4);
-		for(uint32_t y=v[0].Y;y<v[2].Y;y++)
+		memset(rawBmp, 0, timg->Width * timg->Height * 4);
+		for(uint32_t y=min_y; y < max_y; y++)
 		{
-			for(uint32_t x=v[0].X;x<v[2].X;x++)
+			for(uint32_t x = min_x; x < max_x; x++)
 			{
-				UVPoint uv=xy2uv(x,y,v[0],v[1],v[2],v[3],t[0],t[1],t[2],t[3]);
-				rawBmp[x+y*v[2].X]=texbBmp[uint32_t(uv.U*tWidth+0.5)+uint32_t(uv.V*tHeight+0.5)*tWidth];
+				UVPoint uv=xy2uv(x, y, v[0], v[1], v[2], v[3], t[0], t[1], t[2], t[3]);
+				rawBmp[x + y * timg->Width] = texbBmp[uint32_t(uv.U * tWidth + 0.5) + uint32_t(uv.V * tHeight + 0.5) * tWidth];
 			}
 		}
 

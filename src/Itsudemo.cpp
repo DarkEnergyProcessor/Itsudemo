@@ -5,6 +5,7 @@
 
 #include "TEXB.h"
 #include "CompilerName.h"
+#include "../Info.rc"
 
 #include <iostream>
 #include <string>
@@ -204,7 +205,7 @@ int main(int argc,char* argv[])
 		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString("1.0.5\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString(ITSUDEMO_VERSION "\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 #ifdef _DEBUG
 	VersionString.append(" (debug)");
