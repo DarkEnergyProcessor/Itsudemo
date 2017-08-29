@@ -114,7 +114,7 @@ void dumpTEXB(TextureBank* texb,const std::string path)
 	for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 	{
 		temp_timg=*i;
-		temp_string=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png";
+		temp_string=getBasename(temp_timg->Name.c_str())+std::string(".png");
 		std::cerr << "Writing: " << temp_string << std::endl;
 		temp_int=lodepng::encode(
 			fixedPath+temp_string,
@@ -276,7 +276,7 @@ int main(int argc,char* argv[])
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{
 			temp_timg=*i;
-			std::string filename=std::string(strrchr(temp_timg->Name.c_str(),'/')+1)+".png.imag";
+			std::string filename=getBasename(temp_timg->Name.c_str())+std::string(".png.imag");
 			uint32_t temp=texb->Name.length()+6;
 			prebuf[0]=temp>>24;
 			prebuf[1]=(temp>>16)&255;
@@ -310,16 +310,17 @@ int main(int argc,char* argv[])
 
 		for(std::vector<TextureImage*>::iterator i=timg_list.begin();i!=timg_list.end();i++)
 		{
-			temp_string=std::string(strrchr((*i)->Name.c_str(),'/')+1)+".png";
+			TextureImage* ti = *i;
+			temp_string=getBasename(ti->Name.c_str())+std::string(".png");
 			std::cerr << "Writing: " << temp_string << std::endl;
 			temp_int=lodepng::encode(
 				fixedPath+temp_string,
 				std::vector<uint8_t>(
-					reinterpret_cast<char*>((*i)->RawImage),
-					reinterpret_cast<char*>((*i)->RawImage)+(*i)->Width*(*i)->Height*4
+					reinterpret_cast<char*>(ti->RawImage),
+					reinterpret_cast<char*>(ti->RawImage)+ti->Width*ti->Height*4
 				),
-				(*i)->Width,
-				(*i)->Height
+				ti->Width,
+				ti->Height
 			);
 			if(temp_int!=0)
 				std::cerr << "         " << lodepng_error_text(temp_int) << std::endl;
