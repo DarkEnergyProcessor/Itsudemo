@@ -59,7 +59,7 @@ inline const char* getBasename(const char* path)
 {
 	const char* a=strrchr(path,'/');
 	const char* b=strrchr(path,'\\');
-	return a==b?path:std::max(a,b);
+	return a == b ? path : std::max(a,b) + 1;
 }
 
 std::string getDirectory(const char* path)
@@ -103,7 +103,7 @@ void dumpTEXB(TextureBank* texb,const std::string path)
 	std::string fixedPath=getDirectory(charPath);
 
 	show_information_once(texb,path);
-	temp_string=std::string(getBasename(texb->Name.c_str())+1)+".png";
+	temp_string=std::string(getBasename(texb->Name.c_str()))+".png";
 
 	std::cerr << std::endl;
 	std::cerr << "Writing: " << temp_string << std::endl;
@@ -333,7 +333,7 @@ int main(int argc,char* argv[])
 	{
 		show_information_once(texb,inputPath);
 
-		std::string temp_string=std::string(getBasename(texb->Name.c_str())+1)+".png";
+		std::string temp_string=std::string(getBasename(texb->Name.c_str()))+".png";
 		std::string fixedPath=getDirectory(inputPath.c_str());
 		std::cerr << "Writing: " << temp_string << std::endl;
 		temp_int=lodepng::encode(fixedPath+temp_string,texb->FetchRaw(),texb->Width,texb->Height);

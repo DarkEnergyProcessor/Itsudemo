@@ -91,7 +91,6 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 	uint16_t VertexCount=0;
 	uint16_t IndexCount=0;
 	uint16_t ImageCount=0;
-	std::vector<TextureImage*> imageListTemp;
 	memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
 	VertexCount=(prebuf[0]<<8)|prebuf[1];
 	IndexCount=(prebuf[2]<<8)|prebuf[3];
@@ -143,7 +142,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 					default:
 					{
 						// Based from extb.c, this is unknown and the program just throws assert failed. Delete all memory and exit
-						for(std::vector<TextureImage*>::iterator k=imageListTemp.begin();k!=imageListTemp.end();k++)
+						for(std::vector<TextureImage*>::iterator k=texb->ImageList_Id.begin();k!=texb->ImageList_Id.end();k++)
 							LIBTEXB_FREE((*k));
 						LIBTEXB_FREE(temp_buffer);
 						LIBTEXB_FREE(timg);
@@ -160,7 +159,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		{
 			// Currently not supported. It breaks the TextureImage structure
 			TextureImage* t;
-			for(std::vector<TextureImage*>::iterator k=imageListTemp.begin();k!=imageListTemp.end();k++)
+			for(std::vector<TextureImage*>::iterator k=texb->ImageList_Id.begin();k!=texb->ImageList_Id.end();k++)
 			{
 				t=*k;
 				LIBTEXB_FREE(t);
@@ -176,11 +175,6 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		memory_buffer.read(reinterpret_cast<char*>(prebuf),4);
 		timg->Width=(prebuf[0]<<8)|prebuf[1];
 		timg->Height=(prebuf[2]<<8)|prebuf[3];
-
-		/*
-		memory_buffer.read(reinterpret_cast<char*>(&cx),2);
-		memory_buffer.read(reinterpret_cast<char*>(&cy),2);
-		*/
 		memory_buffer.seekg(4,std::ios::cur);
 
 		uint32_t vsize=verts*sizeof(uint32_t)*4;
@@ -193,7 +187,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 
 		memory_buffer.read(reinterpret_cast<char*>(vibuf)+vsize,idxs);
 		LIBTEXB_FREE(temp_buffer);
-		imageListTemp.push_back(timg);
+		texb->ImageList_Id.push_back(timg);
 		texb->VertexIndexUVs.push_back(vibuf);
 	}
 	uint32_t dataSize=_n-memory_buffer.tellg();
@@ -240,7 +234,7 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		{
 			// Upps, I don't know the kind of the compression.
 			FailAndExit:
-			for(std::vector<TextureImage*>::iterator k=imageListTemp.begin();k!=imageListTemp.end();k++)
+			for(std::vector<TextureImage*>::iterator k=texb->ImageList_Id.begin();k!=texb->ImageList_Id.end();k++)
 				LIBTEXB_FREE((*k));
 			LIBTEXB_FREE(texb);
 			LIBTEXB_FAILWITH(EBADF);
@@ -250,7 +244,6 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		memory_buffer.read(reinterpret_cast<char*>(rawData),dataSize);
 	texb->RawImage=LIBTEXB_ALLOC(uint8_t,tWidth*tHeight*4);
 	convert_map(rawData,tWidth,tHeight,TexbFlags,texb->RawImage);
-	texb->ImageList_Id=imageListTemp;
 	LIBTEXB_FREE(rawData);
 
 	for(uint32_t i=0;i<texb->ImageList_Id.size();i++)
@@ -287,14 +280,18 @@ TextureBank* TextureBank::FromMemory(uint8_t* _mem,size_t _n)
 		uint32_t max_y = std::max(v[0].Y, std::max(v[1].Y, std::max(v[2].Y, v[3].Y)));
 
 		rawBmp=LIBTEXB_ALLOC(uint32_t, timg->Width * timg->Height);
-
-		memset(rawBmp, 0, timg->Width * timg->Height * 4);
+		
+		size_t rawBmpSize = timg->Width * timg->Height;
+		memset(rawBmp, 0, rawBmpSize * 4);
 		for(uint32_t y=min_y; y < max_y; y++)
 		{
 			for(uint32_t x = min_x; x < max_x; x++)
 			{
 				UVPoint uv=xy2uv(x, y, v[0], v[1], v[2], v[3], t[0], t[1], t[2], t[3]);
-				rawBmp[x + y * timg->Width] = texbBmp[uint32_t(uv.U * tWidth + 0.5) + uint32_t(uv.V * tHeight + 0.5) * tWidth];
+				size_t idx = x + y * timg->Width;
+
+				if (idx >= 0 && idx < rawBmpSize)
+					rawBmp[idx] = texbBmp[uint32_t(uv.U * tWidth + 0.5) + uint32_t(uv.V * tHeight + 0.5) * tWidth];
 			}
 		}
 
