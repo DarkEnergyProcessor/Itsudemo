@@ -1,8 +1,9 @@
-#License
+License
+=======
 
-###Itsudemo and libtexb license (this project)
+### Itsudemo and libtexb license (this project)
 
-Copyright © 2037 Dark Energy Processor Corporation
+Copyright © 2039 Dark Energy Processor Corporation
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,7 +20,7 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FO
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-###zLib/libz license
+### zLib/libz license
 
   version 1.2.8, April 28th, 2013
 
@@ -53,7 +54,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 
 Only zLib distributed. Other libraries that come with zlib, like minizip is not redistributed because it's unused.
 
-###LodePNG license
+### LodePNG license
 
 LodePNG version 20160118
 
@@ -78,7 +79,7 @@ freely, subject to the following restrictions:
     3. This notice may not be removed or altered from any source
     distribution.
 
-###TCLAP license
+### TCLAP license
 
 Copyright (c) 2003 Michael E. Smoot 
 
@@ -102,4 +103,4 @@ AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 THE SOFTWARE.
 
-###End of license
+### End of license

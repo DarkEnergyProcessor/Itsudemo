@@ -6,6 +6,7 @@
 #include "TEXB.h"
 #include "xy2uv.h"
 
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <string>

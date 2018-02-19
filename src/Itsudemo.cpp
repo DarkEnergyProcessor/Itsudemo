@@ -66,7 +66,7 @@ std::string getDirectory(const char* path)
 {
 	const char* basename=getBasename(path);
 	if(basename>path)
-		return std::string(path,0,basename-path+1);
+		return std::string(path,0,basename-path);
 
 	return std::string();
 }
@@ -202,10 +202,10 @@ int main(int argc,char* argv[])
 		//std::cerr << "Currently interactive mode is not supported." << std::endl;
 		//return main_interactive();
 		std::cerr << "   Type --help for command-line usage.\n" << std::endl;
-		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2037 Dark Energy Processor Corporation\n" << std::endl;
+		std::cerr << "   Itsudemo. TEXB Manipulation tool\n\n   Copyright (c) 2039 Dark Energy Processor Corporation\n" << std::endl;
 		return 0;
 	}
-	std::string VersionString(ITSUDEMO_VERSION "\nCopyright (c) 2037 Dark Energy Processor Corporation\nCompiled with ");
+	std::string VersionString(ITSUDEMO_VERSION "\nCopyright (c) 2039 Dark Energy Processor Corporation\nCompiled with ");
 	VersionString.append(CompilerName());
 #ifdef _DEBUG
 	VersionString.append(" (debug)");
@@ -215,7 +215,7 @@ int main(int argc,char* argv[])
 	AppendStringVisitor AppendE("e",&CmdLineOrder);
 	AppendStringVisitor AppendN("n",&CmdLineOrder);
 	AppendStringVisitor AppendR("r",&CmdLineOrder);
-	CmdLine CommandLine("Itsudemo. TEXB Manipulation tool\nCopyright (c) 2037 Dark Energy Processor Corporation",' ',VersionString);
+	CmdLine CommandLine("Itsudemo. TEXB Manipulation tool\nCopyright (c) 2039 Dark Energy Processor Corporation",' ',VersionString);
 	SwitchArg SwitchA("a","file-info","Prints TEXB information to stdout",CommandLine,false);
 	ValueArg<uint32_t> SwitchC("c","compress-level","Sets compress level when writing TEXB. 0 - No compression, 9 - Best compression",false,6,"0-9",CommandLine);
 	SwitchArg SwitchD("d","dump-all","Dump all images, including the texture to PNG in the TEXB directory",CommandLine,false);
