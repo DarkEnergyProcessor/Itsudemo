@@ -57,6 +57,8 @@ Size  (u32)
 			(multiply by VertexCount)
 			X					(u32 fixed 16.16)
 			Y					(u32 fixed 16.16)
+			U					(u32 fixed 16.16)
+			V					(u32 fixed 16.16)
 			
 			(multiply by IndexCount)
 			Index				(u8)

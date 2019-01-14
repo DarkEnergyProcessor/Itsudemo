@@ -89,7 +89,7 @@ void copy_2bpp_rgba5551(uint8_t *raw, int len, uint8_t *output) {
 		output[ctr] = shift | (shift >> 5);
 		shift = (pixel & 0x07C0) >> 3;
 		output[ctr + 1] = shift | (shift >> 5);
-		shift = (pixel & 0x003E) << 3;
+		shift = (pixel & 0x003E) << 2;
 		output[ctr + 2] = shift | (shift >> 5);
 		output[ctr + 3] = (pixel % 2)? 255 : 0;
 	}
@@ -122,31 +122,40 @@ void copy_3bpp_rgb(uint8_t *raw, int len, uint8_t *output) {
 void convert_map(uint8_t *raw, uint32_t w, uint32_t h, uint16_t texb_flags, uint8_t *output) {
 	uint8_t pix_format=uint8_t(texb_flags)>>6;
 	uint8_t img_format=texb_flags&7;
-	if (pix_format == 3) {
-		switch (img_format) {
-			case 1:
-				copy_1bpp_luma(raw, w * h, output);
-				break;
-			case 0:
-				copy_1bpp_alpha(raw, w * h, output);
-				break;
-			case 2:
-				copy_2bpp_lumalpha(raw, w * h, output);
-				break;
-			case 3:
-				copy_3bpp_rgb(raw, w * h, output);
-				break;
-			default:
-				memcpy(output, raw, w * h * 4);
-				break;
+
+	switch (pix_format) {
+		case 3: {
+			switch (img_format) {
+				case 1:
+					copy_1bpp_luma(raw, w * h, output);
+					break;
+				case 0:
+					copy_1bpp_alpha(raw, w * h, output);
+					break;
+				case 2:
+					copy_2bpp_lumalpha(raw, w * h, output);
+					break;
+				case 3:
+					copy_3bpp_rgb(raw, w * h, output);
+					break;
+				default:
+					memcpy(output, raw, w * h * 4);
+					break;
+			}
+
+			break;
 		}
+		case 0:
+			copy_2bpp_rgb565(raw, w * h, output);
+			break;
+		case 1:
+			copy_2bpp_rgba5551(raw, w * h, output);
+			break;
+		case 2:
+			copy_2bpp_rgba4444(raw, w * h, output);
+			break;
+		default: break;
 	}
-	else if(pix_format == 0)
-		copy_2bpp_rgb565(raw, w * h, output);
-	else if(pix_format == 1)
-		copy_2bpp_rgba5551(raw, w * h, output);
-	else if(pix_format == 2)
-		copy_2bpp_rgba4444(raw, w * h, output);
 	
 	return;
 }

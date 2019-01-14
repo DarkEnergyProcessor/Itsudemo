@@ -3,8 +3,6 @@
 * Saves TextureBank to TEXB
 **/
 
-#include "TEXB.h"
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -16,7 +14,8 @@
 
 #include <stdint.h>
 
-#include <zlib.h>
+#include "TEXB.h"
+#include "zlib.h"
 
 int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t CompressLevel)
 {

@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-#include <zlib.h>
+#include "zlib.h"
 
 uint8_t GetBytePerPixel(uint16_t TexbFlags)
 {

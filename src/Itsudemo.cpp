@@ -3,10 +3,6 @@
 * The main program.
 **/
 
-#include "TEXB.h"
-#include "CompilerName.h"
-#include "../Info.rc"
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -17,9 +13,13 @@
 #include <cstdlib>
 
 #include <stdint.h>
-#include <tclap/CmdLine.h>
-#include <lodepng.h>
-#include <zlib.h>
+
+#include "TEXB.h"
+#include "CompilerName.h"
+#include "Info.rc"
+#include "tclap/CmdLine.h"
+#include "lodepng.h"
+#include "zlib.h"
 
 struct AppendStringVisitor:public TCLAP::Visitor
 {

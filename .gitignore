@@ -1,3 +1,4 @@
+build
 ./*.texb
 ./*.png.imag
 bin/*
