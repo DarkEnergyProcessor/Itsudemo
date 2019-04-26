@@ -1,0 +1,10 @@
+language: cpp
+dist: xenial
+
+compiler:
+- gcc
+- clang
+
+script:
+- cmake -Bbuild -H.
+- cmake --build build --config Release
