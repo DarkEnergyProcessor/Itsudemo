@@ -1,4 +1,4 @@
-#define ITSUDEMO_VERSION "@ITSUDEMO_VERSION@"
+﻿#define ITSUDEMO_VERSION "@ITSUDEMO_VERSION@"
 
 #ifdef RC_INVOKED
 
@@ -18,7 +18,7 @@ BEGIN
 			VALUE "FileDescription", "TEXB Manipulation Tool"
 			VALUE "FileVersion", ITSUDEMO_VERSION
 			VALUE "InternalName", "Itsudemo.exe"
-			VALUE "LegalCopyright", "Copyright � 2039 Dark Energy Processor Corporation"
+			VALUE "LegalCopyright", "Copyright © 2039 Dark Energy Processor Corporation"
 			VALUE "OriginalFilename", "Itsudemo.exe"
 			VALUE "ProductName", "Itsudemo"
 			VALUE "ProductVersion", ITSUDEMO_VERSION
