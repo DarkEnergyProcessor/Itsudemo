@@ -1,10 +1,4 @@
 build
-./*.texb
-./*.png.imag
-bin/*
-sln/*
-!sln/Itsudemo.sln
-!sln/Itsudemo.vcxproj
-!sln/Itsudemo.vcxproj.filters
-libs/
-obj/
+*.texb
+*.png.imag
+installdir
