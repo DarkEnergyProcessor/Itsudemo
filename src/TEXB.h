@@ -158,7 +158,7 @@ public:
 	// Replaces image with specificed index inside texture bank with the specificed TextureImage
 	// Returns 0 on success
 	TEXB_DEPRECATED
-	int32_t ReplaceImage(TextureImage* image,uint32_t index);
+	int32_t ReplaceImage(TextureImage* image,size_t index);
 	// Replaces image with specified index inside texture bank with the speificed TextureImage
 	// Throws exception on failure
 	// dummy can be anything
@@ -186,7 +186,7 @@ public:
 	// Warning: can be slow if called repeatedly
 	void ReflectChanges();
 	
-	friend class TextureImage;
+	friend struct TextureImage;
 };
 
 struct TextureImage
@@ -224,7 +224,7 @@ public:
 	// Pixel format
 	TEXB_PIXEL_FORMAT PixelFormat;
 
-	friend class TextureBank;
+	friend struct TextureBank;
 };
 
 typedef TextureBank TEXB;

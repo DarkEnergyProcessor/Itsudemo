@@ -40,7 +40,7 @@ TextureBank::~TextureBank()
 TextureBank* TextureBank::Clone()
 {
 	TextureBank* texb=new TextureBank;
-	uint32_t memsize=Width*Height*4;
+	size_t memsize=Width*Height*4;
 
 	texb->RawImageWidth=Width;
 	texb->RawImageHeight=Height;
@@ -73,7 +73,7 @@ int32_t TextureBank::ReplaceImage(TextureImage* Image)
 	return EINVAL;
 }
 
-int32_t TextureBank::ReplaceImage(TextureImage* Image,uint32_t Index)
+int32_t TextureBank::ReplaceImage(TextureImage* Image,size_t Index)
 {
 	if(Index>=ImageList_Id.size()) return ERANGE;
 
@@ -95,10 +95,10 @@ int32_t TextureBank::ReplaceImage(TextureImage* Image,uint32_t Index)
 		{Vrtx->Vertices[3].X/65536,Vrtx->Vertices[3].Y/65536}
 	};
 	UVPoint t[4]={
-		{Vrtx->Vertices[0].U/65536,Vrtx->Vertices[0].V/65536},
-		{Vrtx->Vertices[1].U/65536,Vrtx->Vertices[1].V/65536},
-		{Vrtx->Vertices[2].U/65536,Vrtx->Vertices[2].V/65536},
-		{Vrtx->Vertices[3].V/65536,Vrtx->Vertices[3].V/65536}
+		{Vrtx->Vertices[0].U/65536.0,Vrtx->Vertices[0].V/65536.0},
+		{Vrtx->Vertices[1].U/65536.0,Vrtx->Vertices[1].V/65536.0},
+		{Vrtx->Vertices[2].U/65536.0,Vrtx->Vertices[2].V/65536.0},
+		{Vrtx->Vertices[3].V/65536.0,Vrtx->Vertices[3].V/65536.0}
 	};
 
 	for(uint32_t y=0;y<Image->Height;y++)

@@ -17,6 +17,14 @@
 #include "TEXB.h"
 #include "zlib.h"
 
+inline void ToBE(uint8_t *dest, uint32_t v)
+{
+	dest[0]=v>>24;
+	dest[1]=(v>>16)&255;
+	dest[2]=(v>>8)&255;
+	dest[3]=v&255;
+}
+
 int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t CompressLevel)
 {
 	if(MemorySize==NULL) return EINVAL;
@@ -31,8 +39,8 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	sstream.write("TEXB",4);
 	sstream.write("\0\0\0\0",4);
 
-	uint32_t nameSize=Name.length()+7;
-	temp_short=(nameSize+1)/2*2;
+	size_t nameSize=Name.length()+7;
+	temp_short=uint16_t((nameSize+1)/2*2);
 	prebuf[0]=temp_short>>8;
 	prebuf[1]=temp_short&255;
 	sstream.write(reinterpret_cast<char*>(prebuf),2);
@@ -40,38 +48,25 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	sstream.write((Name+".texb").c_str(),nameSize-1);
 	if(nameSize%2==1) sstream.put(0);
 
-	/*temp_short=htons(RawImageWidth);
-	sstream.write(reinterpret_cast<char*>(&temp_short),2);
-	temp_short=htons(RawImageHeight);
-	*/
 	prebuf[0]=RawImageWidth>>8;
 	prebuf[1]=RawImageWidth&255;
 	prebuf[2]=RawImageHeight>>8;
 	prebuf[3]=RawImageHeight&255;
 	sstream.write(reinterpret_cast<char*>(prebuf),4);
 
-	//temp_short=htons(CompressLevel>0?204:196);
 	prebuf[0]=0;
 	prebuf[1]=CompressLevel>0?204:196;
 	sstream.write(reinterpret_cast<char*>(prebuf),2);
 
-	/*uint32_t TotalVertexLocation=sstream.tellp();
-	uint16_t tImgs=ImageList_Id.size();
-	uint16_t tVrtx=htons(tImgs*4);
-	uint16_t tIndx=htons(tImgs*6);
-	temp_short=htons(tImgs);
-	sstream.write(reinterpret_cast<char*>(&tVrtx),2);
-	sstream.write(reinterpret_cast<char*>(&tIndx),2);
-	sstream.write(reinterpret_cast<char*>(&temp_short),2);*/
-	uint16_t tImgs=ImageList_Id.size();
-	temp_short=tImgs*4;
+	size_t tImgs=ImageList_Id.size();
+	temp_short=uint16_t(tImgs*4);
 	prebuf[0]=temp_short>>8;
 	prebuf[1]=temp_short&255;
-	temp_short=tImgs*6;
+	temp_short=uint16_t(tImgs*6);
 	prebuf[2]=temp_short>>8;
 	prebuf[3]=temp_short&255;
 	sstream.write(reinterpret_cast<char*>(prebuf),4);
-	prebuf[0]=tImgs>>8;
+	prebuf[0]=(tImgs>>8)&255;
 	prebuf[1]=tImgs&255;
 	sstream.write(reinterpret_cast<char*>(prebuf),2);
 
@@ -79,9 +74,9 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	{
 		TextureImage* cur=ImageList_Id[i];
 		sstream.write("TIMG\0\0",6);
-		uint32_t curStreamSize=sstream.tellp();
+		size_t curStreamSize=sstream.tellp();
 		nameSize=cur->Name.length()+11;
-		temp_short=(nameSize+1)/2*2;
+		temp_short=uint16_t((nameSize+1)/2*2);
 		prebuf[0]=temp_short>>8;
 		prebuf[1]=temp_short&255;
 		sstream.write(reinterpret_cast<char*>(prebuf),2);
@@ -90,10 +85,6 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 		if(nameSize%2==1) sstream.put(0);
 
 		sstream.write("\xFF\xFF\x00\x01\x00\x00\x00\x00\x00\x01\x00\x01\x04\x06",14);
-		/*temp_short=htons(cur->Width);
-		sstream.write(reinterpret_cast<char*>(&temp_short),2);
-		temp_short=htons(cur->Height);
-		sstream.write(reinterpret_cast<char*>(&temp_short),2);*/
 		prebuf[0]=cur->Width>>8;
 		prebuf[1]=cur->Width&255;
 		prebuf[2]=cur->Height>>8;
@@ -101,21 +92,24 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 		sstream.write(reinterpret_cast<char*>(prebuf),4);
 		sstream.write("\0\0\0\0",4);
 
-		uint32_t* vrtxCur=VertexIndexUVs[i];
+		FixedVertexIndexFormat *vrtxCur = VertexIndexUVs[i];
 
-		for(uint32_t j=0;j<16;j++)
+		for(uint32_t j=0;j<4;j++)
 		{
-			prebuf[0]=vrtxCur[j]>>24;
-			prebuf[1]=(vrtxCur[j]>>16)&255;
-			prebuf[2]=(vrtxCur[j]>>8)&255;
-			prebuf[3]=vrtxCur[j]&255;
+			ToBE(prebuf, vrtxCur->Vertices[j].X);
+			sstream.write(reinterpret_cast<char*>(prebuf),4);
+			ToBE(prebuf, vrtxCur->Vertices[j].Y);
+			sstream.write(reinterpret_cast<char*>(prebuf),4);
+			ToBE(prebuf, vrtxCur->Vertices[j].U);
+			sstream.write(reinterpret_cast<char*>(prebuf),4);
+			ToBE(prebuf, vrtxCur->Vertices[j].V);
 			sstream.write(reinterpret_cast<char*>(prebuf),4);
 		}
 		sstream.write(reinterpret_cast<char*>(vrtxCur)+64,6);
 
-		temp_int=sstream.tellp();
+		temp_int=(uint32_t)sstream.tellp();
 		sstream.seekp(curStreamSize-2,std::ios::beg);
-		temp_short=(temp_int-=curStreamSize);
+		temp_short=uint16_t(temp_int-=(uint32_t)curStreamSize);
 		prebuf[0]=temp_short>>8;
 		prebuf[1]=temp_short&255;
 		sstream.write(reinterpret_cast<char*>(prebuf),2);
@@ -160,7 +154,7 @@ int32_t TextureBank::SaveToMemory(uint8_t*& Memory,size_t* MemorySize,uint32_t C
 	sstream.write(reinterpret_cast<char*>(prebuf),4);
 
 	sstream.seekp(0,std::ios::end);
-	temp_int=sstream.tellp();
+	temp_int=(uint32_t)sstream.tellp();
 	temp_buffer=LIBTEXB_ALLOC(uint8_t,temp_int);
 	memcpy(temp_buffer,sstream.str().c_str(),temp_int);
 	Memory=temp_buffer;
