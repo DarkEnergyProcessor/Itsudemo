@@ -12,16 +12,16 @@
 
 #include <stdint.h>
 
-TextureImage* TextureBank::FetchImage(std::string ImageName)
+TextureImage* TextureBank::FetchImage(const std::string &ImageName)
 {
-	std::map<std::string,uint32_t>::iterator i=ImageList_Names.find(ImageName);
+	std::map<std::string,size_t>::iterator i=ImageList_Names.find(ImageName);
 	if(i==this->ImageList_Names.end())
 		LIBTEXB_FAILWITH(ENOENT);
 
 	return ImageList_Id[i->second];
 }
 
-TextureImage* TextureBank::FetchImage(uint32_t Index)
+TextureImage* TextureBank::FetchImage(size_t Index)
 {
 	if(Index<this->ImageList_Id.size())
 		return (this->ImageList_Id)[Index];

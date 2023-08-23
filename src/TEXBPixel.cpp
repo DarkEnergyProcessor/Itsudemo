@@ -120,41 +120,45 @@ void copy_3bpp_rgb(uint8_t *raw, int len, uint8_t *output) {
 }
 
 void convert_map(uint8_t *raw, uint32_t w, uint32_t h, uint16_t texb_flags, uint8_t *output) {
-	uint8_t pix_format=uint8_t(texb_flags)>>6;
-	uint8_t img_format=texb_flags&7;
+	convert_map(raw, w, h, TEXB_GET_CHANNEL_KIND(texb_flags), TEXB_GET_PIXEL_FORMAT(texb_flags), output);
+}
 
+void convert_map(uint8_t *raw, uint32_t w, uint32_t h, TEXB_CHANNEL_KIND img_format, TEXB_PIXEL_FORMAT pix_format, uint8_t *output) {
 	switch (pix_format) {
-		case 3: {
+		case TEXB_PIXEL_FORMAT_BYTE: {
 			switch (img_format) {
-				case 1:
+				case TEXB_CHANNEL_KIND_LUMINANCE:
 					copy_1bpp_luma(raw, w * h, output);
 					break;
-				case 0:
+				case TEXB_CHANNEL_KIND_ALPHA:
 					copy_1bpp_alpha(raw, w * h, output);
 					break;
-				case 2:
+				case TEXB_CHANNEL_KIND_LUMINANCE_ALPHA:
 					copy_2bpp_lumalpha(raw, w * h, output);
 					break;
-				case 3:
+				case TEXB_CHANNEL_KIND_RGB:
 					copy_3bpp_rgb(raw, w * h, output);
 					break;
-				default:
+				case TEXB_CHANNEL_KIND_RGBA:
 					memcpy(output, raw, w * h * 4);
+					break;
+				default:
 					break;
 			}
 
 			break;
 		}
-		case 0:
+		case TEXB_PIXEL_FORMAT_RGB565:
 			copy_2bpp_rgb565(raw, w * h, output);
 			break;
-		case 1:
+		case TEXB_PIXEL_FORMAT_RGBA5551:
 			copy_2bpp_rgba5551(raw, w * h, output);
 			break;
-		case 2:
+		case TEXB_PIXEL_FORMAT_RGBA4444:
 			copy_2bpp_rgba4444(raw, w * h, output);
 			break;
-		default: break;
+		default:
+			break;
 	}
 	
 	return;
@@ -181,4 +185,34 @@ UVPoint xy2uv(uint32_t x,uint32_t y,Point v0,Point v1,Point v2,Point v3,UVPoint 
 	ret.V=t2.V * a0 + t3.V * a1 + t0.V * a2 + t1.V * a3;
 
 	return ret;
+}
+
+size_t GetBytePerPixel(uint16_t TexbFlags)
+{
+	uint8_t iff=TexbFlags&7;
+	return GetBytePerPixel(iff, uint8_t(TexbFlags)>>6);
+}
+
+size_t GetBytePerPixel(uint8_t chankind, uint8_t pixfmt)
+{
+	switch(pixfmt)
+	{
+		case 0:
+		case 1:
+		case 2:
+			return 2;
+		case 3:
+		{
+			// [0] ALPHA | [1] LUMA | [2] LUMALPHA | [3] RGB | [4] RGBA
+			switch(chankind)
+			{
+			case 0:
+				return 1;
+			default:
+				return chankind;
+			}
+		}
+		default:
+			return 0;
+	}
 }

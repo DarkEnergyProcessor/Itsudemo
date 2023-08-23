@@ -12,13 +12,16 @@
 
 // Defaults to C++ new and delete
 #ifndef LIBTEXB_ALLOC
+// Deprecated
 #define LIBTEXB_ALLOC(type,size) new type[size]
 #endif
 
 #ifndef LIBTEXB_FREE
+// Deprecated
 #define LIBTEXB_FREE(ptr) delete[] ptr
 #endif
 
+// Deprecated
 #ifdef LIBTEXB_NO_EXCEPTION
 #define LIBTEXB_FAILEXIT return NULL
 #define LIBTEXB_FAILWITH(errcode) {errno=errcode;return NULL;}
@@ -27,14 +30,26 @@
 #define LIBTEXB_FAILWITH(errcode) throw errcode
 #endif
 
+#include <array>
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
 
 #include <cstdlib>
+#include <cstdint>
 
-// To prevent GCC 4.8 or below complaining about C++11 features must be enabled, use stdint.h instead of cstdint
-#include <stdint.h>
+#include "TEXB/TEXBLib.h"
+
+#if __cplusplus >= 201402L
+#define TEXB_DEPRECATED [[deprecated]]
+#elif defined(_MSC_VER)
+#define TEXB_DEPRECATED __declspec(deprecated)
+#elif defined(__GNUC__) || defined(__clang__)
+#define TEXB_DEPRECATED __attribute__((deprecated))
+#else
+#define TEXB_DEPRECATED
+#endif
 
 struct Point
 {
@@ -48,6 +63,21 @@ struct UVPoint
 	double V;
 };
 
+struct VertexFormat
+{
+	uint32_t X, Y, U, V;
+};
+
+#pragma pack(push, 1)
+struct FixedVertexIndexFormat
+{
+	std::array<VertexFormat, 4> Vertices;
+	std::array<uint8_t, 6> Indices;
+};
+#pragma pack(pop)
+
+static_assert(sizeof(FixedVertexIndexFormat) == 70, "invalid fixed vertex index format size");
+
 // Class of Image in TEXB
 struct TextureImage;
 
@@ -59,8 +89,8 @@ protected:
 	uint32_t RawImageHeight;
 	uint16_t _Flags;
 	std::vector<TextureImage*> ImageList_Id;
-	std::map<std::string,uint32_t> ImageList_Names;
-	std::vector<uint32_t*> VertexIndexUVs;
+	std::map<std::string,size_t> ImageList_Names;
+	std::vector<FixedVertexIndexFormat*> VertexIndexUVs;
 	
 	TextureBank():Width(RawImageWidth),Height(RawImageHeight),Flags(_Flags) {}
 public:
@@ -71,7 +101,7 @@ public:
 	const uint32_t& Width;
 	// Texture bank height
 	const uint32_t& Height;
-	// Texture bank raw image
+	// Texture bank raw image in RGBA
 	uint8_t* RawImage;
 	// Texture bank flags when decoded with FromFile or FromMemory
 	const uint16_t& Flags;
@@ -81,22 +111,26 @@ public:
 	TextureBank(uint32_t width,uint32_t height);
 	// Loads TEXB from file
 	// Throws int or returns NULL on error
-	static TextureBank* FromFile(std::string filename);
+	static TextureBank* FromFile(const std::string &filename);
 	// Loads TEXB from memory
 	// Throws int or returns NULL on error
-	static TextureBank* FromMemory(uint8_t* memory,size_t memsize);
+	static TextureBank* FromMemory(const uint8_t* memory,size_t memsize);
+	// Loads TEXB from callback
+	// Throws std::exception on error
+	static TextureBank* FromCallback(void *handle, size_t(*reader)(void*, size_t, size_t, void*));
 	// Clone this TextureBank to a new instance.
 	TextureBank* Clone();
 	
+	size_t GetImageCount() const noexcept;
 	// List all images name in TEXB as std::vector
 	// Images name doesn't contain .png.imag suffix
 	std::vector<std::string> ListImages();
 	// Returns the raw image data from image name in TextureBank in form of RGBA
 	// Returns NULL or throws exception on failure
-	TextureImage* FetchImage(std::string image_name);
+	TextureImage* FetchImage(const std::string &image_name);
 	// Returns the raw image data from index in TextureBank in form of RGBA
 	// Returns NULL or throws exception on failure
-	TextureImage* FetchImage(uint32_t index);
+	TextureImage* FetchImage(size_t index);
 	// Returns all TextureImage
 	std::vector<TextureImage*> FetchAll();
 	// Returns raw image of this texture bank
@@ -119,16 +153,27 @@ public:
 	
 	// Replaces image inside texture bank with the specificed TextureImage
 	// Returns 0 on success
+	TEXB_DEPRECATED
 	int32_t ReplaceImage(TextureImage* image);
 	// Replaces image with specificed index inside texture bank with the specificed TextureImage
 	// Returns 0 on success
+	TEXB_DEPRECATED
 	int32_t ReplaceImage(TextureImage* image,uint32_t index);
+	// Replaces image with specified index inside texture bank with the speificed TextureImage
+	// Throws exception on failure
+	// dummy can be anything
+	void ReplaceImage(TextureImage *image, size_t index, bool dummy);
 	// Define new texture image location
 	// Returns 0 and the texture image index on success
+	TEXB_DEPRECATED
 	int32_t DefineImage(const Point* texture_vertexes,const UVPoint* texture_uvs,std::string name,uint32_t* index);
 	// Defines new texture image location with their UVs automatically generated.
 	// Returns 0 and the texture image index on success
+	TEXB_DEPRECATED
 	int32_t DefineImage(const Point* texture_where_width_height,std::string name,uint32_t* index);
+	// Define new texture image location
+	// Returns the texture image index on success
+	size_t DefineImage(const std::string &name, uint32_t top, uint32_t left, uint32_t bottom, uint32_t right, uint32_t width, uint32_t height);
 	// Saves current TextureBank to file
 	// Returns 0 on success
 	int32_t SaveToFile(std::string filename,uint32_t compression_level=9);
@@ -155,9 +200,15 @@ protected:
 public:
 	~TextureImage();
 	// Creates TextureImage with specificed Width, Height, and RawImage data.
+	// raw image is assumed to have format of RGBA.
 	// raw image is copied so it's safe to free the raw image memory specificed in raw_image afterwards.
 	// if raw image is null, the raw image filled with white.
-	TextureImage(uint32_t width,uint32_t height,uint8_t* raw_image=NULL);
+	TextureImage(uint32_t width, uint32_t height, uint8_t* raw_image = nullptr);
+	// Creates TextureImage with specified Width, Height, Channel Kind, Pixel Format, and optionally Pixel Data.
+	// Pixel Data has format of channelkind and pixfmt.
+	// Pixel Data is copied so it's safe to free the Pixel Data afterwards.
+	// If Pixel Data is null, the image is filled with white.
+	TextureImage(uint32_t width, uint32_t height, TEXB_CHANNEL_KIND channelkind, TEXB_PIXEL_FORMAT pixfmt, uint8_t *pixels = nullptr);
 	// Copy this TextureImage to a new instance
 	TextureImage* Clone();
 	// Image width
@@ -168,6 +219,10 @@ public:
 	uint8_t* RawImage;
 	// Name of this image without .png.imag
 	std::string Name;
+	// Channel kind
+	TEXB_CHANNEL_KIND ChannelKind;
+	// Pixel format
+	TEXB_PIXEL_FORMAT PixelFormat;
 
 	friend class TextureBank;
 };
