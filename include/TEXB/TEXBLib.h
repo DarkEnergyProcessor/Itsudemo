@@ -17,6 +17,10 @@ typedef struct TEXB_TextureBank TEXB_TextureBank;
 typedef struct TEXB_TextureImage TEXB_TextureImage;
 #endif
 
+#ifndef TEXBLIB
+#	define TEXBLIB
+#endif
+
 typedef enum
 {
 	TEXB_FLAG_COMPRESSED = 8,
@@ -49,13 +53,13 @@ typedef enum
  * @return libTEXB version runtime version.
  * @note This is runtime version, `LIBTEXB_VERSION_NUM` is compile-time version.
 **/
-size_t TEXB_version();
+TEXBLIB size_t TEXB_version();
 
 /**
  * @brief Get readable string of the current libTEXB version.
  * @return String of the current libTEXB version.
 **/
-const char *TEXB_version_string();
+TEXBLIB const char *TEXB_version_string();
 
 /**
  * @brief Get last error message of TEXB_* function calls.
@@ -67,7 +71,7 @@ const char *TEXB_version_string();
  * * Error message is thread-local.
  * @return Reason why last TEXB_* call fails. This function never return NULL.
 **/
-const char *TEXB_get_last_error();
+TEXBLIB const char *TEXB_get_last_error();
 
 /**
  * @brief Create new texture bank atlas with the specified width and height.
@@ -75,14 +79,14 @@ const char *TEXB_get_last_error();
  * @param height Atlas height.
  * @return New texture bank, or NULL on failure.
 **/
-TEXB_TextureBank *TEXB_create(uint32_t width, uint32_t height);
+TEXBLIB TEXB_TextureBank *TEXB_create(uint32_t width, uint32_t height);
 
 /**
  * @brief Open existing texture bank atlas.
  * @param path Path to texb file.
  * @return New texture bank, or NULL on failure.
 **/
-TEXB_TextureBank *TEXB_open_from_file(const char *path);
+TEXBLIB TEXB_TextureBank *TEXB_open_from_file(const char *path);
 
 /**
  * @brief Open existing texture bank using custom reader callback and userdata.
@@ -90,7 +94,7 @@ TEXB_TextureBank *TEXB_open_from_file(const char *path);
  * @param reader Function with signature similar to fread.
  * @return New texture bank, or NULL on failure.
 **/
-TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*reader)(void*, size_t, size_t, void*));
+TEXBLIB TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*reader)(void*, size_t, size_t, void*));
 
 /**
  * @brief Open existing texture bank in-memory.
@@ -98,21 +102,21 @@ TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*reader)(void*, s
  * @param size Length of the texture bank file data.
  * @return New texture bank, or NULL on failure.
 **/
-TEXB_TextureBank *TEXB_open_from_memory(const void *data, size_t size);
+TEXBLIB TEXB_TextureBank *TEXB_open_from_memory(const void *data, size_t size);
 
 /**
  * @brief Duplicate current texture bank.
  * @param texb Existing texture bank.
  * @return New texture bank, or NULL on failure.
 **/
-TEXB_TextureBank *TEXB_clone(TEXB_TextureBank *texb);
+TEXBLIB TEXB_TextureBank *TEXB_clone(TEXB_TextureBank *texb);
 
 /**
  * @brief Free a texture bank and the associated texture image memory.
  * @param t1 Pointer to texture bank. Can be NULL.
  * @param t2 Pointer to pointer to texture bank. Can be NULL. Set the pointer value to NULL.
 **/
-void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2);
+TEXBLIB void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2);
 
 /**
  * @brief Get texture bank name as defined in the file.
@@ -120,7 +124,7 @@ void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2);
  * @return Name of the texture bank, or empty string.
  * @note Don't assume the lifetime of the pointer. Copy it if necessary!
 **/
-const char *TEXB_get_name(TEXB_TextureBank *texb);
+TEXBLIB const char *TEXB_get_name(TEXB_TextureBank *texb);
 
 /**
  * @brief Set the texture bank name.
@@ -128,21 +132,21 @@ const char *TEXB_get_name(TEXB_TextureBank *texb);
  * @param newname New name for this texture bank.
  * @return 1 on success, 0 on failure.
 **/
-int TEXB_set_name(TEXB_TextureBank *texb, const char *newname);
+TEXBLIB int TEXB_set_name(TEXB_TextureBank *texb, const char *newname);
 
 /**
  * @brief Get texture atlas width.
  * @param texb Existing texture bank.
  * @return Texture atlas width
 **/
-uint32_t TEXB_get_atlas_width(TEXB_TextureBank *texb);
+TEXBLIB uint32_t TEXB_get_atlas_width(TEXB_TextureBank *texb);
 
 /**
  * @brief Get texture atlas height.
  * @param texb Existing texture bank.
  * @return Texture atlas height
 **/
-uint32_t TEXB_get_atlas_height(TEXB_TextureBank *texb);
+TEXBLIB uint32_t TEXB_get_atlas_height(TEXB_TextureBank *texb);
 
 /**
  * @brief Get texture atlas raw buffer.
@@ -150,29 +154,29 @@ uint32_t TEXB_get_atlas_height(TEXB_TextureBank *texb);
  * @return Texture atlas raw buffer.
  * @note `TEXB_flush()` can modify certain areas of the raw buffer. Use with caution!
 **/
-void *TEXB_get_atlas_contents(TEXB_TextureBank *texb);
+TEXBLIB void *TEXB_get_atlas_contents(TEXB_TextureBank *texb);
 
 /**
  * @brief Get texture atlas flags. The flags also contains channel kind and pixel format.
  * @param texb Existing texture bank.
  * @return Texture bank flags.
 **/
-uint16_t TEXB_get_flags(TEXB_TextureBank *texb);
+TEXBLIB uint16_t TEXB_get_flags(TEXB_TextureBank *texb);
 
 /**
  * @brief Get amount of images in the texture atlas.
  * @param texb Existing texture bank.
  * @return Amount of images in the texture atlas.
 **/
-size_t TEXB_get_image_count(TEXB_TextureBank *texb);
+TEXBLIB size_t TEXB_get_image_count(TEXB_TextureBank *texb);
 
-TEXB_TextureImage *TEXB_get_image(TEXB_TextureBank *texb, size_t index, const char *name);
-TEXB_TextureImage *TEXB_insert_image(TEXB_TextureBank *texb, TEXB_TextureImage *timg, uint32_t top, uint32_t left, uint32_t bottom, uint32_t right, size_t *index);
-TEXB_TextureImage *TEXB_create_image_in_atlas(TEXB_TextureBank *texb, const char *name, uint32_t top, uint32_t left, uint32_t bottom, uint32_t right, uint32_t width, uint32_t height, size_t *index);
-TEXB_TextureImage *TEXB_create_new_image(const char *name, TEXB_CHANNEL_KIND channelkind, TEXB_PIXEL_FORMAT pixelformat, uint32_t width, uint32_t height);
-const char *TEXB_get_image_name(TEXB_TextureImage *timg);
-int TEXB_set_image_name(TEXB_TextureImage *timg, const char *newname);
-void *TEXB_get_image_contents(TEXB_TextureImage *timg);
+TEXBLIB TEXB_TextureImage *TEXB_get_image(TEXB_TextureBank *texb, size_t index, const char *name);
+TEXBLIB TEXB_TextureImage *TEXB_insert_image(TEXB_TextureBank *texb, TEXB_TextureImage *timg, uint32_t top, uint32_t left, uint32_t bottom, uint32_t right, size_t *index);
+TEXBLIB TEXB_TextureImage *TEXB_create_image_in_atlas(TEXB_TextureBank *texb, const char *name, uint32_t top, uint32_t left, uint32_t bottom, uint32_t right, uint32_t width, uint32_t height, size_t *index);
+TEXBLIB TEXB_TextureImage *TEXB_create_new_image(const char *name, TEXB_CHANNEL_KIND channelkind, TEXB_PIXEL_FORMAT pixelformat, uint32_t width, uint32_t height);
+TEXBLIB const char *TEXB_get_image_name(TEXB_TextureImage *timg);
+TEXBLIB int TEXB_set_image_name(TEXB_TextureImage *timg, const char *newname);
+TEXBLIB void *TEXB_get_image_contents(TEXB_TextureImage *timg);
 
 #ifdef __cplusplus
 } /* extern "C" */

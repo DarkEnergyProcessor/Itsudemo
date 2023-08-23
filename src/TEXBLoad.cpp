@@ -11,6 +11,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 
 #include <cerrno>
@@ -173,7 +174,6 @@ TextureBank *TextureBank::FromCallback(void *handle, size_t(*reader)(void*, size
 						}
 						case 2:
 						{
-							size_t skipLen;
 							readData(2); imageDefLen -= 2; texbSize -= 2;
 							size_t skipLen = (scratchpad[0] << 8) | scratchpad[1];
 							readData(skipLen); imageDefLen -= skipLen; texbSize -= skipLen;
@@ -271,7 +271,7 @@ TextureBank *TextureBank::FromCallback(void *handle, size_t(*reader)(void*, size
 		}
 	}
 
-	size_t dataSize = tWidth * tHeight * GetBytePerPixel(TexbFlags);
+	size_t dataSize = GetBytePerPixel(TexbFlags) * tWidth * tHeight;
 	std::unique_ptr<uint8_t[]> rawData(new uint8_t[dataSize]);
 
 	if(TexbFlags & TEXB_FLAG_COMPRESSED)

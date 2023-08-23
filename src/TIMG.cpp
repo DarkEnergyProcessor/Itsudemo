@@ -13,7 +13,7 @@ TextureImage::TextureImage(uint32_t width,uint32_t height,uint8_t* raw_image)
 : TextureImage(width, height, TEXB_CHANNEL_KIND_RGBA, TEXB_PIXEL_FORMAT_BYTE, raw_image)
 { }
 
-TextureImage::TextureImage(uint32_t width, uint32_t height, TEXB_CHANNEL_KIND channelkind, TEXB_PIXEL_FORMAT pixfmt, uint8_t *pixels = nullptr)
+TextureImage::TextureImage(uint32_t width, uint32_t height, TEXB_CHANNEL_KIND channelkind, TEXB_PIXEL_FORMAT pixfmt, uint8_t *pixels)
 : from_texb(nullptr)
 , Width(width)
 , Height(height)

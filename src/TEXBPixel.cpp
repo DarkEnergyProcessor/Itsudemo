@@ -33,6 +33,7 @@
 **/
 
 #include "TEXB.h"
+#include "TEXBPixel.h"
 
 #include <algorithm>
 

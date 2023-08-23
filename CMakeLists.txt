@@ -17,7 +17,10 @@ elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/zlib")
 	message(STATUS "using provided zlib")
 	add_subdirectory(zlib "${CMAKE_CURRENT_BINARY_DIR}/zlib_build")
 	set(ZLIB_LIBRARY_TARGET zlibstatic)
-	set(ZLIB_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/zlib_build")
+	set(ZLIB_INCLUDE_DIRECTORIES
+		zlib
+		"${CMAKE_CURRENT_BINARY_DIR}/zlib_build"
+	)
 else()
 	message(FATAL_ERROR "cannot find zlib")
 endif()
@@ -25,6 +28,7 @@ endif()
 # LibTEXB
 configure_file(src/TEXBVersion.h.in "${CMAKE_CURRENT_BINARY_DIR}/include/TEXB/TEXBVersion.h")
 add_library(libtexb
+	include/TEXB/TEXBLib.h
 	src/TEXB.h
 	src/TEXBFetch.cpp
 	src/TEXBLib.cpp
@@ -37,7 +41,7 @@ add_library(libtexb
 	src/xy2uv.h
 	"${CMAKE_CURRENT_BINARY_DIR}/include/TEXB/TEXBVersion.h"
 )
-target_include_directories(libtexb PUBLIC include "${CMAKE_CURRENT_BINARY_DIR}/include")
+target_include_directories(libtexb PUBLIC include "${CMAKE_CURRENT_BINARY_DIR}/include" ${ZLIB_INCLUDE_DIRECTORIES})
 target_link_libraries(libtexb PRIVATE ${ZLIB_LIBRARY_TARGET})
 target_compile_definitions(libtexb PRIVATE LIBTEXB_DURING_COMPILATION)
 set_target_properties(libtexb PROPERTIES
@@ -45,6 +49,9 @@ set_target_properties(libtexb PROPERTIES
 	CXX_STANDARD_REQUIRED TRUE
 	OUTPUT_NAME "TEXB"
 )
+if(MSVC)
+	target_compile_definitions(libtexb PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 install(TARGETS)
 

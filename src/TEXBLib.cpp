@@ -1,38 +1,40 @@
+#include <cerrno>
+#include <cstring>
+#include <exception>
 #include <string>
 
+#if defined(_MSC_VER) && defined(_DLL)
+#	define TEXBLIB __declspec(dllexport)
+#elif defined(__GNUC__) || defined(__clang__)
+#	define TEXBLIB __attribute__((visibility("default")))
+#else
+#	define TEXBLIB
+#endif
+
+#include "TEXB/TEXBLib.h"
 #include "TEXB.h"
 #include "TEXBPixel.h"
-#include "TEXB/TEXBLib.h"
-
-#if defined(_MSC_VER)
-#	define TEXB_EXPORT __declspec(dllexport)
-#elif defined(__GNUC__) || defined(__clang__)
-#	define TEXB_EXPORT __attribute__((visibility("default")))
-#else
-#	define TEXB_EXPORT
-#endif
 
 thread_local std::string lastError = LIBTEXB_VERSION;
 
-extern "C"
-{
+extern "C" {
 
-TEXB_EXPORT size_t TEXB_version()
+TEXBLIB size_t TEXB_version()
 {
 	return LIBTEXB_VERSION_NUM;
 }
 
-TEXB_EXPORT const char *TEXB_version_string()
+TEXBLIB const char *TEXB_version_string()
 {
 	return LIBTEXB_VERSION;
 }
 
-TEXB_EXPORT const char *TEXB_get_last_error()
+TEXBLIB const char *TEXB_get_last_error()
 {
 	return lastError.c_str();
 }
 
-TEXB_EXPORT TEXB_TextureBank *TEXB_create(uint32_t width, uint32_t height)
+TEXBLIB TEXB_TextureBank *TEXB_create(uint32_t width, uint32_t height)
 {
 	try
 	{
@@ -49,7 +51,7 @@ TEXB_EXPORT TEXB_TextureBank *TEXB_create(uint32_t width, uint32_t height)
 	}
 }
 
-TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_file(const char *path)
+TEXBLIB TEXB_TextureBank *TEXB_open_from_file(const char *path)
 {
 	try
 	{
@@ -71,7 +73,7 @@ TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_file(const char *path)
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*reader)(void *, size_t, size_t, void *))
+TEXBLIB TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*reader)(void *, size_t, size_t, void *))
 {
 	try
 	{
@@ -89,7 +91,7 @@ TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_callback(void *handle, size_t(*read
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_memory(const void *data, size_t size)
+TEXBLIB TEXB_TextureBank *TEXB_open_from_memory(const void *data, size_t size)
 {
 	try
 	{
@@ -111,7 +113,7 @@ TEXB_EXPORT TEXB_TextureBank *TEXB_open_from_memory(const void *data, size_t siz
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureBank *TEXB_clone(TEXB_TextureBank *texb)
+TEXBLIB TEXB_TextureBank *TEXB_clone(TEXB_TextureBank *texb)
 {
 	try
 	{
@@ -129,7 +131,7 @@ TEXB_EXPORT TEXB_TextureBank *TEXB_clone(TEXB_TextureBank *texb)
 	return nullptr;
 }
 
-TEXB_EXPORT void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2)
+TEXBLIB void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2)
 {
 	delete t1;
 
@@ -140,12 +142,12 @@ TEXB_EXPORT void TEXB_free(TEXB_TextureBank *t1, TEXB_TextureBank **t2)
 	}
 }
 
-TEXB_EXPORT const char *TEXB_get_name(TEXB_TextureBank *texb)
+TEXBLIB const char *TEXB_get_name(TEXB_TextureBank *texb)
 {
 	return texb->Name.c_str();
 }
 
-TEXB_EXPORT int TEXB_set_name(TEXB_TextureBank *texb, const char *newname)
+TEXBLIB int TEXB_set_name(TEXB_TextureBank *texb, const char *newname)
 {
 	try
 	{
@@ -160,32 +162,32 @@ TEXB_EXPORT int TEXB_set_name(TEXB_TextureBank *texb, const char *newname)
 	return 0;
 }
 
-TEXB_EXPORT uint32_t TEXB_get_atlas_width(TEXB_TextureBank *texb)
+TEXBLIB uint32_t TEXB_get_atlas_width(TEXB_TextureBank *texb)
 {
 	return texb->Width;
 }
 
-TEXB_EXPORT uint32_t TEXB_get_atlas_height(TEXB_TextureBank *texb)
+TEXBLIB uint32_t TEXB_get_atlas_height(TEXB_TextureBank *texb)
 {
 	return texb->Height;
 }
 
-TEXB_EXPORT void *TEXB_get_atlas_contents(TEXB_TextureBank *texb)
+TEXBLIB void *TEXB_get_atlas_contents(TEXB_TextureBank *texb)
 {
 	return texb->RawImage;
 }
 
-TEXB_EXPORT uint16_t TEXB_get_flags(TEXB_TextureBank *texb)
+TEXBLIB uint16_t TEXB_get_flags(TEXB_TextureBank *texb)
 {
 	return texb->Flags;
 }
 
-TEXB_EXPORT size_t TEXB_get_image_count(TEXB_TextureBank *texb)
+TEXBLIB size_t TEXB_get_image_count(TEXB_TextureBank *texb)
 {
 	return texb->GetImageCount();
 }
 
-TEXB_EXPORT TEXB_TextureImage *TEXB_get_image(TEXB_TextureBank *texb, size_t index, const char *name)
+TEXBLIB TEXB_TextureImage *TEXB_get_image(TEXB_TextureBank *texb, size_t index, const char *name)
 {
 	try
 	{
@@ -210,7 +212,7 @@ TEXB_EXPORT TEXB_TextureImage *TEXB_get_image(TEXB_TextureBank *texb, size_t ind
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureImage *TEXB_insert_image(
+TEXBLIB TEXB_TextureImage *TEXB_insert_image(
 	TEXB_TextureBank *texb,
 	TEXB_TextureImage *timg,
 	uint32_t top,
@@ -243,7 +245,7 @@ TEXB_EXPORT TEXB_TextureImage *TEXB_insert_image(
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureImage *TEXB_create_image_in_atlas(
+TEXBLIB TEXB_TextureImage *TEXB_create_image_in_atlas(
 	TEXB_TextureBank *texb,
 	const char *name,
 	uint32_t top,
@@ -277,7 +279,7 @@ TEXB_EXPORT TEXB_TextureImage *TEXB_create_image_in_atlas(
 	return nullptr;
 }
 
-TEXB_EXPORT TEXB_TextureImage *TEXB_create_new_image(
+TEXBLIB TEXB_TextureImage *TEXB_create_new_image(
 	const char *name,
 	TEXB_CHANNEL_KIND channelkind,
 	TEXB_PIXEL_FORMAT pixelformat,
@@ -301,4 +303,4 @@ TEXB_EXPORT TEXB_TextureImage *TEXB_create_new_image(
 	return nullptr;
 }
 
-}
+} // extern "C"
